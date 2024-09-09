@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Fractions with Percentages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            display: none;
+            justify-content: space-around;
+            margin: 20px;
+        }
+        .column {
+            width: 40%;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .column h2 {
+            text-align: center;
+        }
+        .item {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            background-color: #f9f9f9;
+        }
+        .item:hover {
+            background-color: #ddd;
+        }
+        .placeholder {
+            min-height: 50px;
+            border: 2px dashed #bbb;
+            margin: 10px;
+            padding: 10px;
+        }
+        .correct {
+            background-color: #90ee90;
+        }
+        .incorrect {
+            background-color: #ffcccb;
+        }
+        #timer {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #startBtn, #playAgainBtn {
+            padding: 20px 40px;
+            font-size: 24px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+        #startBtn:hover, #playAgainBtn:hover {
+            background-color: #0056b3;
+        }
+        #gameArea {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin: auto;
+        }
+        #playAgainBtn {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Match Fractions with Percentages</h1>
+    <div id="timer"></div>
+
+    <!-- Start Button -->
+    <button id="startBtn">Start Game</button>
+
+    <!-- Play Again Button -->
+    <button id="playAgainBtn">Play Again</button>
+
+    <!-- Game Container -->
+    <div class="container" id="gameContainer">
+        <div id="gameArea">
+            <!-- Percentages Column (Left) -->
+            <div class="column" id="percentages">
+                <h2>Percentages</h2>
+            </div>
+
+            <!-- Fractions Column (Right) -->
+            <div class="column" id="fractions">
+                <h2>Fractions</h2>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let startTime, interval;
+        let matches = {};
+        let matchedCount = 0;
+        const totalMatches = 5;
+
+        // Timer function
+        function startTimer() {
+            startTime = Date.now();
+            interval = setInterval(() => {
+                const currentTime = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById("timer").textContent = `Time: ${currentTime} seconds`;
+            }, 1000);
+        }
+
+        // Stop the timer
+        function stopTimer() {
+            clearInterval(interval);
+            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById("timer").textContent = `You completed in: ${timeTaken} seconds`;
+        }
+
+        // Start the game and timer
+        function startGame() {
+            document.getElementById("startBtn").style.display = "none";
+            document.getElementById("playAgainBtn").style.display = "none";
+            document.getElementById("gameContainer").style.display = "block";
+            startTimer();
+            generateFractionsAndPercentages();
+        }
+
+        // Play Again function to reset the game
+        function playAgain() {
+            document.getElementById("playAgainBtn").style.display = "none";
+            matchedCount = 0;
+            document.getElementById("percentages").innerHTML = "<h2>Percentages</h2>";
+            document.getElementById("fractions").innerHTML = "<h2>Fractions</h2>";
+            startGame();
+        }
+
+        // Generate random percentages (multiples of 2 or 5) and corresponding fractions
+        function generateFractionsAndPercentages() {
+            const fractionsColumn = document.getElementById("fractions");
+            const percentagesColumn = document.getElementById("percentages");
+
+            const percentages = [];
+            const fractions = [];
+
+            // Generate random multiples of 2 or 5 for percentages and their equivalent fractions
+            let generatedPercentages = new Set();
+            while (generatedPercentages.size < totalMatches) {
+                const multiplier = Math.random() < 0.5 ? 2 : 5;
+                const randomPercentage = Math.floor(Math.random() * (50 / multiplier) + 1) * multiplier;
+                if (randomPercentage <= 100 && !generatedPercentages.has(randomPercentage)) {
+                    generatedPercentages.add(randomPercentage);
+                    percentages.push(randomPercentage + "%");
+                    fractions.push({
+                        percentage: randomPercentage + "%",
+                        fraction: getFractionEquivalent(randomPercentage)
+                    });
+                }
+            }
+
+            shuffleArray(percentages);
+            shuffleArray(fractions);
+
+            fractions.forEach((fractionObj) => {
+                const placeholder = document.createElement('div');
+                placeholder.classList.add('placeholder');
+                placeholder.setAttribute('data-match', fractionObj.percentage);
+                placeholder.textContent = fractionObj.fraction;
+                fractionsColumn.appendChild(placeholder);
+            });
+
+            percentages.forEach((percentage, index) => {
+                const item = document.createElement('div');
+                item.classList.add('item');
+                item.setAttribute('draggable', 'true');
+                item.id = `percent${index + 1}`;
+                item.textContent = percentage;
+
+                matches[`percent${index + 1}`] = percentage;
+                percentagesColumn.appendChild(item);
+                item.addEventListener('dragstart', dragStart);
+            });
+
+            document.querySelectorAll('.placeholder').forEach(placeholder => {
+                placeholder.addEventListener('dragover', dragOver);
+                placeholder.addEventListener('drop', drop);
+            });
+        }
+
+        // Function to return the fraction equivalent of a percentage
+        function getFractionEquivalent(percentage) {
+            function gcd(a, b) {
+                if (!b) return a;
+                return gcd(b, a % b);
+            }
+            const numerator = percentage;
+            const denominator = 100;
+            const divisor = gcd(numerator, denominator);
+            return `${numerator / divisor}/${denominator / divisor}`;
+        }
+
+        // Helper function to shuffle an array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function dragStart(event) {
+            event.dataTransfer.setData('text/plain', event.target.id);
+        }
+
+        function dragOver(event) {
+            event.preventDefault();
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const itemId = event.dataTransfer.getData('text/plain');
+            const draggedElement = document.getElementById(itemId);
+            const match = event.target.getAttribute('data-match');
+
+            // Remove the 'incorrect' class if it exists
+            event.target.classList.remove('incorrect');
+
+            // Check if the dragged item matches the target placeholder
+            if (matches[itemId] === match) {
+                // If the placeholder already has a child, remove it before appending the correct one
+                if (event.target.hasChildNodes()) {
+                    event.target.removeChild(event.target.firstChild);
+                }
+
+                event.target.appendChild(draggedElement); // Append the correct answer
+                event.target.classList.add('correct'); // Mark the placeholder as correct
+
+                matchedCount++;
+
+                // Check if all matches have been made
+                if (matchedCount === totalMatches) {
+                    stopTimer();
+                    document.getElementById("playAgainBtn").style.display = "block";
+                }
+            } else {
+                // If the match is incorrect, add the 'incorrect' class
+                event.target.classList.add('incorrect');
+            }
+        }
+
+        // Add event listener to the Start and Play Again buttons
+        document.getElementById("startBtn").addEventListener("click", startGame);
+        document.getElementById("playAgainBtn").addEventListener("click", playAgain);
+    </script>
+</body>
+</html>

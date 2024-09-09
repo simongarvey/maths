@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index Laws Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .container {
+            display: none;  /* Hide game area initially */
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .column {
+            width: 45%;
+        }
+        .expression, .simplified-term {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid black;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+        }
+        .expression {
+            background-color: #f9f9f9;
+        }
+        .simplified-term {
+            background-color: #e0e0e0;
+        }
+        #playAgainBtn, #startBtn {
+            display: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #startBtn {
+            display: block;
+        }
+        #timer {
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+    <!-- Load MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<h1>Match Expressions Using Index Laws to Their Simplified Forms</h1>
+<div id="timer">Time: 00:00</div>
+
+<!-- Start Game Button -->
+<button id="startBtn" onclick="startGame()">Start Game</button>
+
+<!-- Play Again Button -->
+<button id="playAgainBtn" onclick="resetGame()">Play Again</button>
+
+<div class="container" id="gameArea">
+    <div class="column" id="expressionsColumn"><h3>Expressions</h3></div>
+    <div class="column" id="simplifiedTermsColumn"><h3>Simplified Terms</h3></div>
+</div>
+
+<script>
+    let startTime, timerInterval, correctMatches = 0;
+
+    function startTimer() {
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+        const elapsedTime = Date.now() - startTime;
+        const seconds = Math.floor((elapsedTime / 1000) % 60);
+        const minutes = Math.floor((elapsedTime / 1000) / 60);
+        document.getElementById('timer').textContent = `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+    }
+
+    // Function to shuffle an array
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function generateExpressions() {
+        const base = Math.floor(Math.random() * 8) + 2;
+        let expressions = [];
+        let results = new Set();
+        while (expressions.length < 5) {
+            const exp1 = Math.floor(Math.random() * 5) + 1;
+            const exp2 = Math.floor(Math.random() * 5) + 1;
+            const operation = Math.random() > 0.5 ? '*' : '/';
+            const result = operation === '*' ? exp1 + exp2 : exp1 - exp2;
+
+            if (!results.has(result)) {
+                results.add(result);
+                expressions.push({
+                    expression: `\\(${base}^{${exp1}} ${operation === '*' ? '\\times' : '\\div'} ${base}^{${exp2}}\\)`,
+                    simplified: `\\(${base}^{${result}}\\)`,
+                    id: `${exp1}-${exp2}-${result}`
+                });
+            }
+        }
+        return expressions;
+    }
+
+    function displayExpressions() {
+        const expContainer = document.getElementById('expressionsColumn');
+        const simpContainer = document.getElementById('simplifiedTermsColumn');
+
+        expContainer.innerHTML = '';
+        simpContainer.innerHTML = '';
+
+        const expressions = generateExpressions();
+        
+        // Shuffle the simplified terms
+        const simplifiedTerms = shuffleArray([...expressions]);
+
+        expressions.forEach(exp => {
+            let expDiv = document.createElement('div');
+            expDiv.className = 'expression';
+            expDiv.draggable = true;
+            expDiv.id = 'exp-' + exp.id;
+            expDiv.setAttribute('data-id', exp.id);
+            expDiv.innerHTML = exp.expression;
+            expContainer.appendChild(expDiv);
+        });
+
+        // Display shuffled simplified terms
+        simplifiedTerms.forEach(exp => {
+            let simpDiv = document.createElement('div');
+            simpDiv.className = 'simplified-term';
+            simpDiv.id = 'simp-' + exp.id;
+            simpDiv.setAttribute('data-id', exp.id);
+            simpDiv.innerHTML = exp.simplified;
+            simpContainer.appendChild(simpDiv);
+        });
+
+        MathJax.typesetPromise().then(() => {
+            addDragDropHandlers();
+            startTimer();  // Start the timer when the game is displayed
+        });
+    }
+
+    function addDragDropHandlers() {
+        const expressions = document.querySelectorAll('.expression');
+        const terms = document.querySelectorAll('.simplified-term');
+
+        expressions.forEach(expression => {
+            expression.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', e.target.getAttribute('data-id'));
+            });
+        });
+
+        terms.forEach(term => {
+            term.addEventListener('dragover', e => e.preventDefault());
+            term.addEventListener('drop', e => {
+                e.preventDefault();
+                const dataId = e.dataTransfer.getData('text/plain');
+                const draggedElement = document.querySelector(`#exp-${dataId}`);
+                const matchId = term.getAttribute('data-id');
+
+                if (matchId === dataId) {
+                    // Remove any existing element before adding the new one
+                    if (term.hasChildNodes()) {
+                        term.removeChild(term.firstChild);
+                    }
+
+                    term.appendChild(draggedElement);  // Correct match
+                    term.style.backgroundColor = 'lightgreen';
+                    correctMatches++;
+
+                    // Check if all expressions are correctly matched
+                    if (correctMatches === 5) {
+                        stopTimer();
+                        document.getElementById('playAgainBtn').style.display = 'block';
+                    }
+                } else {
+                    term.style.backgroundColor = 'lightcoral';  // Incorrect match
+                }
+            });
+        });
+    }
+
+    function resetGame() {
+        document.getElementById('playAgainBtn').style.display = 'none';
+        correctMatches = 0;
+        displayExpressions();
+    }
+
+    function startGame() {
+        // Hide the Start Game button and show the game area
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'flex';
+        displayExpressions();  // Start the game
+    }
+
+</script>
+
+</body>
+</html>

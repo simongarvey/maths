@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percentage Problems</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        #quizForm {
+            display: inline-block;
+            text-align: left;
+        }
+        .question-container {
+            margin-bottom: 20px;
+        }
+        .question {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        input[type="text"] {
+            padding: 5px;
+            width: 100px;
+            margin-left: 10px;
+        }
+        input[type="submit"] {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .result {
+            font-size: 18px;
+            margin-top: 20px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>What is x% of an amount?</h1>
+
+    <form id="quizForm">
+        <div id="questions"></div>
+        <input type="submit" value="Submit Answers">
+    </form>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        const totalQuestions = 5;
+        const questions = [];
+
+        // Function to generate a random number that's a multiple of 5 or 2
+        function getRandomPercentage() {
+            return Math.random() < 0.5 ? Math.floor(Math.random() * 10 + 1) * 5 : Math.floor(Math.random() * 10 + 1) * 2;
+        }
+
+        // Function to generate a random amount between 20 and 600
+        function getRandomAmount() {
+            return Math.floor(Math.random() * 581) + 20;
+        }
+
+        // Function to create the questions
+        function generateQuestions() {
+            for (let i = 0; i < totalQuestions; i++) {
+                const percentage = getRandomPercentage();
+                const amount = getRandomAmount();
+                const correctAnswer = (percentage / 100) * amount;
+                questions.push({ percentage, amount, correctAnswer });
+            }
+        }
+
+        // Function to display the questions in the form
+        function displayQuestions() {
+            const questionContainer = document.getElementById('questions');
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('question-container');
+                questionDiv.innerHTML = `
+                    <div class="question">Q${index + 1}: What is ${question.percentage}% of ${question.amount}?</div>
+                    <input type="text" id="answer${index}" placeholder="Your answer">
+                `;
+                questionContainer.appendChild(questionDiv);
+            });
+        }
+
+        // Function to check the user's answers
+        function checkAnswers(event) {
+            event.preventDefault();
+            let correctCount = 0;
+            const resultContainer = document.getElementById('result');
+            resultContainer.innerHTML = '';
+
+            questions.forEach((question, index) => {
+                const userAnswer = parseFloat(document.getElementById(`answer${index}`).value);
+                const roundedCorrectAnswer = parseFloat(question.correctAnswer.toFixed(2));
+
+                const answerResult = document.createElement('div');
+                if (Math.abs(userAnswer - roundedCorrectAnswer) < 0.01) {
+                    correctCount++;
+                    answerResult.classList.add('correct');
+                    answerResult.innerHTML = `Q${index + 1}: Correct! (${question.percentage}% of ${question.amount} is ${roundedCorrectAnswer})`;
+                } else {
+                    answerResult.classList.add('incorrect');
+                    answerResult.innerHTML = `Q${index + 1}: Incorrect. The correct answer is ${roundedCorrectAnswer}, but you answered ${userAnswer}.`;
+                }
+                resultContainer.appendChild(answerResult);
+            });
+
+            const finalResult = document.createElement('div');
+            finalResult.innerHTML = `You got ${correctCount} out of ${totalQuestions} correct!`;
+            resultContainer.appendChild(finalResult);
+        }
+
+        // Initialize quiz
+        generateQuestions();
+        displayQuestions();
+
+        // Attach event listener to form submission
+        document.getElementById('quizForm').addEventListener('submit', checkAnswers);
+    </script>
+
+</body>
+</html>
