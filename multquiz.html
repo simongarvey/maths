@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #question {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #timer {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #response {
+            font-size: 24px;
+            padding: 10px;
+            width: 100px;
+        }
+        #message {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        #errors {
+            margin-top: 10px;
+        }
+        .error-x {
+            color: red;
+            font-size: 24px;
+            margin: 0 5px;
+        }
+        /* Remove up/down arrows from the number input */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        #playAgainBtn {
+            display: none; /* Hidden until the game ends */
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Multiplication Quiz</h1>
+<div id="timer">Time Left: 60</div>
+<div id="question"></div>
+<input type="number" id="response">
+<div id="errors"></div> <!-- Container for red X's -->
+<div id="message"></div>
+
+<!-- Play Again Button (hidden initially) -->
+<button id="playAgainBtn" onclick="resetGame()">Play Again</button>
+
+<script>
+    let timeLeft = 60;
+    let correctCount = 0;
+    let incorrectCount = 0;
+    let currentQuestion = {};
+    let gameInterval;
+    let gameOver = false;
+
+    // Start the game
+    function startGame() {
+        document.getElementById('playAgainBtn').style.display = 'none'; // Hide play again button
+        document.getElementById('response').disabled = false; // Enable the input box
+        timeLeft = 60;
+        correctCount = 0;
+        incorrectCount = 0;
+        gameOver = false;
+        document.getElementById('errors').innerHTML = ''; // Clear red X's
+        document.getElementById('message').textContent = ''; // Clear the message
+        document.getElementById('timer').textContent = `Time Left: ${timeLeft}`; // Reset timer display
+
+        // Start the timer
+        gameInterval = setInterval(countDown, 1000);
+        // Generate the first question
+        generateQuestion();
+    }
+
+    // Countdown timer function
+    function countDown() {
+        if (timeLeft > 0) {
+            timeLeft--;
+            document.getElementById('timer').textContent = `Time Left: ${timeLeft}`;
+        } else {
+            endGame('Time\'s up! You answered ' + correctCount + ' question(s) correctly.');
+        }
+    }
+
+    // Generate a random multiplication question
+    function generateQuestion() {
+        const num1 = Math.floor(Math.random() * 11) + 2; // 2 to 12 times table
+        const num2 = Math.floor(Math.random() * 11) + 2;
+        currentQuestion = {
+            num1: num1,
+            num2: num2,
+            answer: num1 * num2
+        };
+        document.getElementById('question').textContent = `What is ${num1} x ${num2}?`;
+        document.getElementById('response').value = ''; // Clear previous input
+        document.getElementById('response').focus(); // Focus on input
+    }
+
+    // Handle answer submission
+    function submitAnswer(event) {
+        if (event.key === 'Enter' && !gameOver) {
+            const userAnswer = parseInt(document.getElementById('response').value);
+            
+            // Check if the input is a valid number
+            if (!isNaN(userAnswer) && userAnswer === currentQuestion.answer) {
+                correctCount++;
+            } else {
+                incorrectCount++;
+                // Add a red X for each incorrect response
+                displayErrorX();
+
+                if (incorrectCount >= 3) {
+                    endGame('You got 3 wrong! Game Over.');
+                    return;
+                }
+            }
+            generateQuestion(); // Generate new question after each submission
+        }
+    }
+
+    // Display a red X for each incorrect response
+    function displayErrorX() {
+        const errorContainer = document.getElementById('errors');
+        const redX = document.createElement('span');
+        redX.textContent = 'X';
+        redX.classList.add('error-x');
+        errorContainer.appendChild(redX);
+    }
+
+    // End the game
+    function endGame(message) {
+        clearInterval(gameInterval);
+        gameOver = true;
+        document.getElementById('question').textContent = '';
+        document.getElementById('message').textContent = message;
+        document.getElementById('response').disabled = true; // Disable the input box
+        document.getElementById('playAgainBtn').style.display = 'inline-block'; // Show the play again button
+    }
+
+    // Reset the game
+    function resetGame() {
+        startGame(); // Restart the game when the button is clicked
+    }
+
+    // Add event listener for the 'Enter' key
+    document.getElementById('response').addEventListener('keydown', submitAnswer);
+
+    // Start the game when the page loads
+    window.onload = startGame;
+</script>
+
+</body>
+</html>
