@@ -59,7 +59,7 @@
 <body>
 
 <h1>Multiplication Quiz</h1>
-<div id="timer">Time Left: 60</div>
+<div id="timer">Time Left: 30</div>
 <div id="question"></div>
 <input type="number" id="response">
 <div id="errors"></div> <!-- Container for red X's -->
@@ -69,7 +69,7 @@
 <button id="playAgainBtn" onclick="resetGame()">Play Again</button>
 
 <script>
-    let timeLeft = 60;
+    let timeLeft = 30;
     let correctCount = 0;
     let incorrectCount = 0;
     let currentQuestion = {};
@@ -80,7 +80,7 @@
     function startGame() {
         document.getElementById('playAgainBtn').style.display = 'none'; // Hide play again button
         document.getElementById('response').disabled = false; // Enable the input box
-        timeLeft = 60;
+        timeLeft = 30;
         correctCount = 0;
         incorrectCount = 0;
         gameOver = false;
