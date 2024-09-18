@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Composite Function Game</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .function-container {
+            margin: 20px 0;
+            font-size: 1.5rem;
+        }
+
+        #composite-function {
+            margin: 20px 0;
+            font-size: 1.5rem;
+        }
+
+        input[type="text"] {
+            font-size: 1.2rem;
+            padding: 5px;
+            width: 100px;
+            text-align: center;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            color: red;
+        }
+
+        button {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            padding: 10px 20px;
+        }
+    </style>
+
+    <script>
+        let a, b, c, d; // Coefficients for f(x) = ax + b and g(x) = cx + d
+        let m; // Random integer to substitute into the composite function
+        let n; // Result of composite function
+        let chosenComposite; // The chosen composite function
+
+        // Function to generate random integers
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Function to format coefficients for LaTeX (handling negative signs properly)
+        function formatCoefficient(coeff, variable) {
+            if (coeff === 1) {
+                return variable;
+            } else if (coeff === -1) {
+                return `-${variable}`;
+            } else {
+                return `${coeff}${variable}`;
+            }
+        }
+
+        // Function to format the constant term (handle sign properly)
+        function formatConstant(constant) {
+            if (constant > 0) {
+                return `+ ${constant}`;
+            } else if (constant < 0) {
+                return `- ${Math.abs(constant)}`;
+            } else {
+                return ''; // Don't show anything if the constant is 0
+            }
+        }
+
+        // Function to define f(x) and g(x)
+        function f(x) {
+            return a * x + b;
+        }
+
+        function g(x) {
+            return c * x + d;
+        }
+
+        // Generate a random composite function and calculate n
+        function generateCompositeFunction() {
+            a = randomInt(-5, 5);
+            b = randomInt(-10, 10);
+            c = randomInt(-5, 5);
+            d = randomInt(-10, 10);
+
+            m = randomInt(-10, 10);
+
+            // Choose a random composite function
+            const compositeFunctions = ['f(g(x))', 'g(f(x))', 'f(f(x))', 'g(g(x))'];
+            chosenComposite = compositeFunctions[Math.floor(Math.random() * compositeFunctions.length)];
+
+            // Calculate the result of the composite function
+            switch (chosenComposite) {
+                case 'f(g(x))':
+                    n = f(g(m));
+                    break;
+                case 'g(f(x))':
+                    n = g(f(m));
+                    break;
+                case 'f(f(x))':
+                    n = f(f(m));
+                    break;
+                case 'g(g(x))':
+                    n = g(g(m));
+                    break;
+            }
+
+            // Display the functions and the composite function using LaTeX
+            let fLatex = `f(x) = ${formatCoefficient(a, 'x')} ${formatConstant(b)}`;
+            let gLatex = `g(x) = ${formatCoefficient(c, 'x')} ${formatConstant(d)}`;
+            document.getElementById("f-function").innerText = `$$${fLatex}$$`;
+            document.getElementById("g-function").innerText = `$$${gLatex}$$`;
+
+            let compositeLatex = `${chosenComposite} = ${n}`;
+            document.getElementById("composite-function").innerText = `$$${compositeLatex}$$`;
+
+            // Clear the result and input field
+            document.getElementById("result").innerText = '';
+            document.getElementById("answer").value = '';
+
+            // Re-render LaTeX
+            MathJax.typeset();
+        }
+
+        // Function to check the user's answer
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById("answer").value);
+            if (userAnswer === m) {
+                document.getElementById("result").innerText = "Correct!";
+                document.getElementById("result").style.color = "green";
+            } else {
+                document.getElementById("result").innerText = `Incorrect! The correct value of m is ${m}`;
+                document.getElementById("result").style.color = "red";
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.onload = generateCompositeFunction;
+    </script>
+</head>
+<body>
+    <h1>Composite Function Game</h1>
+    
+    <div class="function-container">
+        <p id="f-function"></p>
+        <p id="g-function"></p>
+    </div>
+    
+    <p id="composite-function"></p>
+    
+    <div class="answer-container">
+        <label for="answer">Enter the value of m: </label>
+        <input type="text" id="answer">
+    </div>
+
+    <button onclick="checkAnswer()">Submit Answer</button>
+    
+    <div id="result"></div>
+    
+    <button onclick="generateCompositeFunction()">Generate New Function</button>
+</body>
+</html>
