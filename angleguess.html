@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angle Estimation Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        svg {
+            width: 300px;
+            height: 300px;
+            border: 1px solid #ccc;
+            background-color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            font-size: 1.2rem;
+            padding: 5px;
+            width: 100px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        button {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            color: #006400;
+        }
+    </style>
+    <script>
+        let currentAngle;
+        let baseAngle;
+        let totalPoints = 0;
+        let rounds = 0;
+        const maxRounds = 10;
+
+        // Function to generate a random angle and a random orientation
+        function generateRandomAngle() {
+            currentAngle = Math.floor(Math.random() * (355 - 5 + 1)) + 5; // Random angle between 5 and 355
+            baseAngle = Math.floor(Math.random() * 360); // Random orientation between 0 and 359
+
+            // Calculate the end point of the fixed arm based on the base angle
+            const length = 100; // Length of the arms
+            const baseX = 150 + length * Math.cos((baseAngle - 90) * Math.PI / 180); // Adjusted for SVG coordinate system
+            const baseY = 150 + length * Math.sin((baseAngle - 90) * Math.PI / 180); // Adjusted for SVG coordinate system
+
+            // Calculate the end point of the moving arm based on the sum of base angle and random angle
+            const movingX = 150 + length * Math.cos((baseAngle + currentAngle - 90) * Math.PI / 180); // Adjusted for SVG coordinate system
+            const movingY = 150 + length * Math.sin((baseAngle + currentAngle - 90) * Math.PI / 180); // Adjusted for SVG coordinate system
+
+            // Update the position of the fixed and moving arms
+            document.getElementById("fixed-arm").setAttribute("x2", baseX);
+            document.getElementById("fixed-arm").setAttribute("y2", baseY);
+
+            document.getElementById("moving-arm").setAttribute("x2", movingX);
+            document.getElementById("moving-arm").setAttribute("y2", movingY);
+
+            // Update the arc to mark the angle
+            updateArc(baseAngle, baseAngle + currentAngle);
+        }
+
+        // Function to update the arc based on the angle
+        function updateArc(startAngle, endAngle) {
+            const radius = 50; // Radius of the arc
+            const largeArcFlag = (endAngle - startAngle) > 180 ? 1 : 0; // Determines if the arc is greater than 180 degrees
+            const startX = 150 + radius * Math.cos((startAngle - 90) * Math.PI / 180);
+            const startY = 150 + radius * Math.sin((startAngle - 90) * Math.PI / 180);
+            const endX = 150 + radius * Math.cos((endAngle - 90) * Math.PI / 180);
+            const endY = 150 + radius * Math.sin((endAngle - 90) * Math.PI / 180);
+
+            // Create the arc path using the SVG path commands
+            const arcPath = `M 150,150 L ${startX},${startY} A ${radius},${radius} 0 ${largeArcFlag},1 ${endX},${endY} Z`;
+            document.getElementById("angle-arc").setAttribute("d", arcPath);
+        }
+
+        // Function to calculate points based on the user's estimate
+        function calculatePoints(userEstimate) {
+            const error = Math.abs(currentAngle - userEstimate);
+            if (error === 0) return 10; // Perfect guess
+            if (error <= 5) return 8; // Very close
+            if (error <= 15) return 5; // Close
+            if (error <= 30) return 3; // Somewhat close
+            return 1; // Far off
+        }
+
+        // Function to process the user's estimate
+        function submitEstimate() {
+            const userEstimate = parseInt(document.getElementById("estimate").value);
+            if (isNaN(userEstimate) || userEstimate < 0 || userEstimate > 360) {
+                alert("Please enter a valid angle between 0 and 360 degrees.");
+                return;
+            }
+
+            const points = calculatePoints(userEstimate);
+            totalPoints += points;
+            rounds++;
+
+            document.getElementById("feedback").textContent = `You earned ${points} points for this estimate.`;
+
+            if (rounds < maxRounds) {
+                generateRandomAngle();
+                document.getElementById("estimate").value = ''; // Clear input field
+                document.getElementById("estimate").focus(); // Focus on the input field
+            } else {
+                endGame();
+            }
+        }
+
+        // Function to end the game and display the final rating
+        function endGame() {
+            let rating;
+            if (totalPoints >= 80) {
+                rating = "Genius";
+            } else if (totalPoints >= 60) {
+                rating = "Expert";
+            } else if (totalPoints >= 40) {
+                rating = "Pretty Good";
+            } else if (totalPoints >= 20) {
+                rating = "Fair";
+            } else {
+                rating = "Keep Trying";
+            }
+
+            document.getElementById("feedback").textContent = `Game over! You scored a total of ${totalPoints} points. Your rating is: ${rating}`;
+            document.getElementById("submit-btn").disabled = true;
+            document.getElementById("estimate").disabled = true;
+            document.getElementById("play-again").style.display = 'block'; // Show play again button
+        }
+
+        // Function to start a new game
+        function startNewGame() {
+            totalPoints = 0;
+            rounds = 0;
+            document.getElementById("submit-btn").disabled = false;
+            document.getElementById("estimate").disabled = false;
+            document.getElementById("estimate").value = ''; // Clear input field
+            document.getElementById("feedback").textContent = ''; // Clear feedback
+            document.getElementById("play-again").style.display = 'none'; // Hide play again button
+            generateRandomAngle(); // Start with a new angle
+            document.getElementById("estimate").focus(); // Focus on the input field
+        }
+
+        // Initialize the first angle when the page loads
+        window.onload = startNewGame;
+    </script>
+</head>
+<body>
+    <h1>Angle Estimation Game</h1>
+    <!-- SVG for displaying the angle -->
+    <svg>
+        <!-- Fixed arm with random orientation (blue) -->
+        <line id="fixed-arm" x1="150" y1="150" x2="150" y2="50" stroke="blue" stroke-width="2" />
+        <!-- Moving arm with random orientation (blue) -->
+        <line id="moving-arm" x1="150" y1="150" x2="150" y2="50" stroke="blue" stroke-width="2" />
+        <!-- Point where both arms meet -->
+        <circle cx="150" cy="150" r="4" fill="black" />
+        <!-- Arc to indicate the angle -->
+        <path id="angle-arc" d="" fill="rgba(0, 0, 255, 0.1)" stroke="blue" stroke-width="2" />
+    </svg>
+    <input type="text" id="estimate">
+    <button id="submit-btn" onclick="submitEstimate()">Submit Estimate</button>
+    <div id="feedback"></div>
+    <button id="play-again" onclick="startNewGame()" style="display:none;">Play Again</button>
+</body>
+</html>
