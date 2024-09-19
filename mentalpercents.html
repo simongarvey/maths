@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percentage Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            font-size: 1.2rem;
+            padding: 5px;
+            width: 100px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #result {
+            font-size: 1.5rem;
+            color: red;
+            margin-bottom: 20px;
+        }
+
+        #countdown {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        #play-again {
+            display: none;
+            font-size: 1.2rem;
+            padding: 10px 20px;
+        }
+    </style>
+    <script>
+        let percentage, quantity, correctAnswer;
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let timeLeft = 60;
+        let timer;
+
+        // Function to generate a random integer between min and max (inclusive)
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Function to generate a new question
+        function generateQuestion() {
+            const percentages = [10, 50, 25, 5, 20];
+            percentage = percentages[Math.floor(Math.random() * percentages.length)];
+            quantity = randomInt(6, 86);
+            correctAnswer = ((percentage / 100) * quantity).toFixed(2); // Round to 2 decimal places
+
+            // Display the question
+            document.getElementById("question").textContent = `What is ${percentage}% of ${quantity}?`;
+            document.getElementById("result").textContent = ''; // Clear result
+            document.getElementById("answer").value = ''; // Clear the input field
+            document.getElementById("answer").focus(); // Focus on the input field
+        }
+
+        // Function to check the user's answer
+        function checkAnswer() {
+            const userAnswer = parseFloat(document.getElementById("answer").value).toFixed(2);
+            if (userAnswer === correctAnswer) {
+                correctCount++;
+                generateQuestion(); // Generate new question after correct answer
+            } else {
+                incorrectCount++;
+                document.getElementById("result").textContent += "❌ "; // Add red cross
+                document.getElementById("answer").value = ''; // Clear the input field
+                document.getElementById("answer").focus(); // Focus on the input field
+                if (incorrectCount >= 3) {
+                    endGame(`Game Over! You made 3 mistakes. Correct answers: ${correctCount}`);
+                }
+            }
+        }
+
+        // Countdown timer function
+        function startCountdown() {
+            timer = setInterval(function () {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    document.getElementById("countdown").textContent = `Time left: ${timeLeft} seconds`;
+                } else {
+                    endGame(`Time's up! You answered ${correctCount} questions correctly.`);
+                }
+            }, 1000);
+        }
+
+        // Function to start the game
+        function startGame() {
+            correctCount = 0;
+            incorrectCount = 0;
+            timeLeft = 60;
+            document.getElementById("result").textContent = ''; // Clear result
+            document.getElementById("countdown").textContent = `Time left: ${timeLeft} seconds`;
+            document.getElementById("play-again").style.display = 'none'; // Hide play again button
+            document.getElementById("answer").disabled = false; // Enable input
+            generateQuestion(); // Generate the first question
+            startCountdown(); // Start the timer
+        }
+
+        // Function to end the game
+        function endGame(message) {
+            clearInterval(timer);
+            document.getElementById("result").textContent = message;
+            document.getElementById("answer").disabled = true; // Disable input
+            document.getElementById("play-again").style.display = 'block'; // Show play again button
+        }
+
+        // Function to restrict input to numbers and decimal point only
+        function validateInput(event) {
+            const value = event.target.value;
+            if (!/^\d*\.?\d*$/.test(value)) {
+                event.target.value = value.slice(0, -1); // Remove last invalid character
+            }
+        }
+
+        // Initialize the game on page load
+        window.onload = function () {
+            startGame();
+        };
+    </script>
+</head>
+<body>
+    <h1>Percentage Game</h1>
+    <div class="question" id="question"></div>
+    <input type="text" id="answer" oninput="validateInput(event)" onkeydown="if(event.key === 'Enter') checkAnswer()">
+    <div id="result"></div>
+    <div id="countdown"></div>
+    <button id="play-again" onclick="startGame()">Play Again</button>
+</body>
+</html>
