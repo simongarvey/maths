@@ -48,6 +48,12 @@
             font-size: 1.5rem;
             color: #006400;
         }
+
+        #exact-angle {
+            margin-top: 10px;
+            font-size: 1.2rem;
+            color: #000;
+        }
     </style>
     <script>
         let currentAngle;
@@ -118,6 +124,7 @@
             rounds++;
 
             document.getElementById("feedback").textContent = `You earned ${points} points for this estimate.`;
+            document.getElementById("exact-angle").textContent = `The exact angle was ${currentAngle}°`;
 
             if (rounds < maxRounds) {
                 generateRandomAngle();
@@ -144,6 +151,7 @@
             }
 
             document.getElementById("feedback").textContent = `Game over! You scored a total of ${totalPoints} points. Your rating is: ${rating}`;
+            document.getElementById("exact-angle").textContent = ''; // Clear exact angle display
             document.getElementById("submit-btn").disabled = true;
             document.getElementById("estimate").disabled = true;
             document.getElementById("play-again").style.display = 'block'; // Show play again button
@@ -157,6 +165,7 @@
             document.getElementById("estimate").disabled = false;
             document.getElementById("estimate").value = ''; // Clear input field
             document.getElementById("feedback").textContent = ''; // Clear feedback
+            document.getElementById("exact-angle").textContent = ''; // Clear exact angle display
             document.getElementById("play-again").style.display = 'none'; // Hide play again button
             generateRandomAngle(); // Start with a new angle
             document.getElementById("estimate").focus(); // Focus on the input field
@@ -182,6 +191,7 @@
     <input type="text" id="estimate">
     <button id="submit-btn" onclick="submitEstimate()">Submit Estimate</button>
     <div id="feedback"></div>
+    <div id="exact-angle"></div>
     <button id="play-again" onclick="startNewGame()" style="display:none;">Play Again</button>
 </body>
 </html>
