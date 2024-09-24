@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulls and Cows Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 50px;
+            height: 50px;
+            padding: 10px;
+            margin: 10px 5px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .message {
+            margin: 15px 0;
+        }
+        .attempt {
+            margin: 10px 0;
+            font-size: 20px;
+        }
+        .feedback {
+            color: red;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 400px) {
+            input[type="text"] {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+            button {
+                padding: 12px 24px;
+                font-size: 16px;
+            }
+            .attempt {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Bulls and Cows</h1>
+        <p>Guess the 4-digit mystery number. You have 5 attempts.</p>
+        <div>
+            <input type="text" id="digit1" maxlength="1" />
+            <input type="text" id="digit2" maxlength="1" />
+            <input type="text" id="digit3" maxlength="1" />
+            <input type="text" id="digit4" maxlength="1" />
+        </div>
+        <button id="guess-button" onclick="playGame()">Guess</button>
+        <button id="new-game-button" class="hidden" onclick="startNewGame()">New Game</button>
+        <div id="history" class="message"></div>
+    </div>
+    
+    <script>
+        let mysteryNumber = generateMysteryNumber();
+        let attempts = 5;
+
+        // Start the cursor in the first box when the page loads
+        window.onload = function() {
+            document.getElementById('digit1').focus();
+        };
+
+        // Automatically move to the next input box when a digit is entered
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                if (input.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+
+        function generateMysteryNumber() {
+            let digits = [];
+            while (digits.length < 4) {
+                let digit = Math.floor(Math.random() * 10);
+                if (!digits.includes(digit)) {
+                    digits.push(digit);
+                }
+            }
+            return digits.join('');
+        }
+
+        function playGame() {
+            const digit1 = document.getElementById('digit1').value;
+            const digit2 = document.getElementById('digit2').value;
+            const digit3 = document.getElementById('digit3').value;
+            const digit4 = document.getElementById('digit4').value;
+            const userGuess = digit1 + digit2 + digit3 + digit4;
+
+            if (userGuess.length !== 4 || isNaN(userGuess)) {
+                alert('Please enter a valid 4-digit number.');
+                return;
+            }
+            
+            attempts--;
+            let bulls = 0;
+            let cows = 0;
+            let feedback = '';
+
+            for (let i = 0; i < 4; i++) {
+                if (userGuess[i] === mysteryNumber[i]) {
+                    bulls++;
+                } else if (mysteryNumber.includes(userGuess[i])) {
+                    cows++;
+                }
+            }
+
+            // Create feedback with bulls ('x') first, then cows ('o')
+            feedback = 'x'.repeat(bulls) + 'o'.repeat(cows);
+            
+            document.getElementById('history').innerHTML += `<div class="attempt">Attempt ${5 - attempts}: ${userGuess} - <span class="feedback">${feedback}</span></div>`;
+            
+            if (bulls === 4) {
+                alert('Congratulations! You guessed the number!');
+                endGame();
+            } else if (attempts === 0) {
+                alert(`Game over! The mystery number was ${mysteryNumber}.`);
+                endGame();
+            } else {
+                clearInputs(); // Clear the input boxes for the next attempt
+            }
+        }
+
+        function clearInputs() {
+            inputs.forEach(input => input.value = ''); // Clear all input boxes
+            inputs[0].focus(); // Set focus back to the first input box
+        }
+
+        function endGame() {
+            inputs.forEach(input => input.disabled = true);
+            document.getElementById('guess-button').disabled = true;
+            document.getElementById('new-game-button').classList.remove('hidden');
+        }
+
+        function startNewGame() {
+            // Reset the game variables and UI elements
+            mysteryNumber = generateMysteryNumber();
+            attempts = 5;
+            document.getElementById('history').innerHTML = '';
+            inputs.forEach(input => {
+                input.value = '';
+                input.disabled = false;
+            });
+            document.getElementById('guess-button').disabled = false;
+            document.getElementById('new-game-button').classList.add('hidden');
+            inputs[0].focus(); // Set focus back to the first input box
+        }
+    </script>
+</body>
+</html>
