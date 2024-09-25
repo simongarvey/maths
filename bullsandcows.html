@@ -57,9 +57,15 @@
         .feedback {
             color: red;
             font-weight: bold;
+            font-size: 30px; /* Increase font size for feedback */
         }
         .hidden {
             display: none;
+        }
+        .error {
+            color: red;
+            font-size: 16px;
+            margin: 10px 0;
         }
         @media (max-width: 400px) {
             input[type="tel"] {
@@ -74,6 +80,9 @@
             .attempt {
                 font-size: 18px;
             }
+            .feedback {
+                font-size: 24px; /* Adjust feedback size for smaller screens */
+            }
         }
     </style>
 </head>
@@ -87,6 +96,7 @@
             <input type="tel" id="digit3" maxlength="1" pattern="\d*" />
             <input type="tel" id="digit4" maxlength="1" pattern="\d*" />
         </div>
+        <div id="error-message" class="error"></div>
         <button id="guess-button" onclick="playGame()">Guess</button>
         <button id="new-game-button" class="hidden" onclick="startNewGame()">New Game</button>
         <div id="history" class="message"></div>
@@ -105,6 +115,7 @@
         const inputs = document.querySelectorAll('input[type="tel"]');
         inputs.forEach((input, index) => {
             input.addEventListener('input', () => {
+                validateUniqueDigits();
                 if (input.value.length === 1 && index < inputs.length - 1) {
                     inputs[index + 1].focus();
                 }
@@ -127,6 +138,20 @@
             return digits.join('');
         }
 
+        function validateUniqueDigits() {
+            const digit1 = document.getElementById('digit1').value;
+            const digit2 = document.getElementById('digit2').value;
+            const digit3 = document.getElementById('digit3').value;
+            const digit4 = document.getElementById('digit4').value;
+            const digits = [digit1, digit2, digit3, digit4];
+            const uniqueDigits = new Set(digits.filter(digit => digit !== ''));
+            if (uniqueDigits.size !== digits.filter(digit => digit !== '').length) {
+                document.getElementById('error-message').textContent = 'Digits must be unique!';
+            } else {
+                document.getElementById('error-message').textContent = '';
+            }
+        }
+
         function playGame() {
             const digit1 = document.getElementById('digit1').value;
             const digit2 = document.getElementById('digit2').value;
@@ -136,6 +161,11 @@
 
             if (userGuess.length !== 4 || isNaN(userGuess)) {
                 alert('Please enter a valid 4-digit number.');
+                return;
+            }
+
+            if (new Set(userGuess).size !== 4) {
+                document.getElementById('error-message').textContent = 'Digits must be unique!';
                 return;
             }
             
@@ -170,6 +200,7 @@
 
         function clearInputs() {
             inputs.forEach(input => input.value = ''); // Clear all input boxes
+            document.getElementById('error-message').textContent = ''; // Clear error message
             inputs[0].focus(); // Set focus back to the first input box
         }
 
@@ -190,6 +221,7 @@
             });
             document.getElementById('guess-button').disabled = false;
             document.getElementById('new-game-button').classList.add('hidden');
+            document.getElementById('error-message').textContent = ''; // Clear error message
             inputs[0].focus(); // Set focus back to the first input box
         }
     </script>
