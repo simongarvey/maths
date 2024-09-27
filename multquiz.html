@@ -54,7 +54,25 @@
             cursor: pointer;
             margin-top: 20px;
         }
+        #results {
+            margin-top: 30px;
+            display: none; /* Hide the results until the game ends */
+        }
+        #average {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        #chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        #chart {
+            width: 100%;
+            height: 400px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js for graph -->
 </head>
 <body>
 
@@ -68,6 +86,14 @@
 <!-- Play Again Button (hidden initially) -->
 <button id="playAgainBtn" onclick="resetGame()">Play Again</button>
 
+<div id="results">
+    <h2>Game History</h2>
+    <div id="average"></div>
+    <div id="chart-container">
+        <canvas id="chart"></canvas>
+    </div>
+</div>
+
 <script>
     let timeLeft = 30;
     let correctCount = 0;
@@ -75,11 +101,13 @@
     let currentQuestion = {};
     let gameInterval;
     let gameOver = false;
+    let chartInstance = null;
 
     // Start the game
     function startGame() {
         document.getElementById('playAgainBtn').style.display = 'none'; // Hide play again button
         document.getElementById('response').disabled = false; // Enable the input box
+        document.getElementById('results').style.display = 'none'; // Hide results graph
         timeLeft = 30;
         correctCount = 0;
         incorrectCount = 0;
@@ -157,6 +185,89 @@
         document.getElementById('message').textContent = message;
         document.getElementById('response').disabled = true; // Disable the input box
         document.getElementById('playAgainBtn').style.display = 'inline-block'; // Show the play again button
+        
+        // Only store result if it's more than 0 and fewer than 3 incorrects
+        if (correctCount > 0 && incorrectCount < 3) {
+            storeResult(correctCount);
+        }
+        displayGameHistory();
+    }
+
+    // Store each game's result in localStorage
+    function storeResult(correctCount) {
+        let gameHistory = JSON.parse(localStorage.getItem('gameHistory')) || [];
+        gameHistory.push(correctCount);
+        localStorage.setItem('gameHistory', JSON.stringify(gameHistory));
+    }
+
+    // Display game history and average score
+    function displayGameHistory() {
+        let gameHistory = JSON.parse(localStorage.getItem('gameHistory')) || [];
+        let total = gameHistory.reduce((sum, score) => sum + score, 0);
+        let average = (total / gameHistory.length).toFixed(2);
+        document.getElementById('average').textContent = `Average Correct Answers: ${average}`;
+        displayFrequencyChart(gameHistory);
+
+        // Show the results graph after the game ends
+        document.getElementById('results').style.display = 'block';
+    }
+
+    // Display the frequency of scores in a column chart
+    function displayFrequencyChart(data) {
+        const frequency = Array(31).fill(0); // Array to count frequency of scores (0-30)
+        data.forEach(score => {
+            frequency[score]++;
+        });
+
+        // Get the min and max score values
+        const minScore = Math.min(...data);
+        const maxScore = Math.max(...data);
+
+        const ctx = document.getElementById('chart').getContext('2d');
+
+        // Destroy previous chart instance if it exists
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        // Create a new chart instance
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: frequency.map((_, index) => index).filter(score => score >= minScore && score <= maxScore),
+                datasets: [{
+                    data: frequency.slice(minScore, maxScore + 1),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false // Hide the legend
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false // Remove vertical grid lines
+                        },
+                        title: {
+                            display: true,
+                            text: 'Correct Answers'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
     }
 
     // Reset the game
@@ -167,8 +278,10 @@
     // Add event listener for the 'Enter' key
     document.getElementById('response').addEventListener('keydown', submitAnswer);
 
-    // Start the game when the page loads
-    window.onload = startGame;
+    // Start the game when the page loads, but don't display the graph
+    window.onload = function() {
+        startGame();
+    };
 </script>
 
 </body>
