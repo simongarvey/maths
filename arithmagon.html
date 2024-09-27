@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arithmagon Solver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            position: relative;
+        }
+        #canvas-container {
+            position: relative;
+            display: inline-block; /* Keep canvas and textboxes together */
+            margin-bottom: 20px; /* Space between canvas and button */
+        }
+        canvas {
+            border: 1px solid #ddd;
+        }
+        .vertex {
+            position: absolute;
+            width: 40px;
+            height: 30px;
+            text-align: center;
+            font-size: 18px;
+            transform: translate(-50%, -50%); /* Centers the input box over the vertex */
+        }
+        #checkButton, #newGameButton, #instructionsButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+        }
+        #resultMessage {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Arithmagon Solver</h1>
+    <p>Solve the arithmagon by entering the numbers at the vertices.</p>
+    <div id="canvas-container">
+        <canvas id="arithmagonCanvas" width="400" height="400"></canvas>
+        <!-- Textboxes positioned at the vertices of the triangle -->
+        <input type="text" id="vertexA" class="vertex" style="left: 200px; top: 50px;">
+        <input type="text" id="vertexB" class="vertex" style="left: 70px; top: 300px;">
+        <input type="text" id="vertexC" class="vertex" style="left: 330px; top: 300px;">
+    </div>
+    <!-- Wrap the buttons inside a div and align them centrally below the canvas -->
+    <div id="button-container">
+        <button id="checkButton" onclick="checkSolution()">Check Solution</button>
+        <button id="newGameButton" onclick="startNewGame()" style="display: none;">New Game</button>
+        <button id="instructionsButton" onclick="showInstructions()">Instructions</button>
+    </div>
+    <div id="resultMessage"></div>
+
+    <script>
+        const canvas = document.getElementById('arithmagonCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Triangle vertices coordinates
+        let vertexA, vertexB, vertexC;
+        let valueA, valueB, valueC;
+        let sideAB, sideBC, sideCA;
+
+        // Function to show instructions
+        function showInstructions() {
+            alert("How to Solve an Arithmagon:\n\n" +
+                "1. An arithmagon is a polygon with numbers at its vertices and sums on its edges.\n" +
+                "2. Your goal is to find the numbers at the vertices such that the sum of the numbers on the ends of each side equals the number on that side.\n" +
+                "3. Enter the numbers in the text boxes at the vertices and click 'Check Solution' to see if you are correct.\n" +
+                "4. If your solution is correct, you can start a new game by clicking 'New Game'.\n\n" +
+                "Good luck and have fun solving the arithmagon!");
+        }
+
+        // Function to start a new game
+        function startNewGame() {
+            // Reset the game
+            document.getElementById('resultMessage').textContent = '';
+            document.getElementById('checkButton').style.display = 'inline-block';
+            document.getElementById('newGameButton').style.display = 'none';
+            document.getElementById('vertexA').value = '';
+            document.getElementById('vertexB').value = '';
+            document.getElementById('vertexC').value = '';
+            initializeGame();
+        }
+
+        // Initialize game and draw the arithmagon
+        function initializeGame() {
+            // Triangle vertices coordinates
+            vertexA = { x: 200, y: 50 };
+            vertexB = { x: 70, y: 300 };
+            vertexC = { x: 330, y: 300 };
+
+            // Generate random vertex values
+            valueA = Math.floor(Math.random() * 10) + 1;
+            valueB = Math.floor(Math.random() * 10) + 1;
+            valueC = Math.floor(Math.random() * 10) + 1;
+
+            // Calculate side sums
+            sideAB = valueA + valueB;
+            sideBC = valueB + valueC;
+            sideCA = valueC + valueA;
+
+            // Draw the initial arithmagon
+            drawArithmagon();
+        }
+
+        // Draw the triangle and side sums
+        function drawArithmagon() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw triangle
+            ctx.beginPath();
+            ctx.moveTo(vertexA.x, vertexA.y);
+            ctx.lineTo(vertexB.x, vertexB.y);
+            ctx.lineTo(vertexC.x, vertexC.y);
+            ctx.closePath();
+            ctx.stroke();
+
+            // Draw side sums
+            ctx.font = '20px Arial';
+            ctx.fillText(sideAB, (vertexA.x + vertexB.x) / 2 - 35, (vertexA.y + vertexB.y) / 2 - 10); // Moved left
+            ctx.fillText(sideBC, (vertexB.x + vertexC.x) / 2 - 15, (vertexB.y + vertexC.y) / 2 + 25);
+            ctx.fillText(sideCA, (vertexC.x + vertexA.x) / 2 + 15, (vertexC.y + vertexA.y) / 2 - 10);
+        }
+
+        // Check user's solution
+        function checkSolution() {
+            const userValueA = parseInt(document.getElementById('vertexA').value);
+            const userValueB = parseInt(document.getElementById('vertexB').value);
+            const userValueC = parseInt(document.getElementById('vertexC').value);
+
+            if (
+                userValueA + userValueB === sideAB &&
+                userValueB + userValueC === sideBC &&
+                userValueC + userValueA === sideCA
+            ) {
+                document.getElementById('resultMessage').textContent = 'Correct! Well done.';
+                document.getElementById('resultMessage').style.color = 'green';
+                document.getElementById('checkButton').style.display = 'none';
+                document.getElementById('newGameButton').style.display = 'inline-block';
+            } else {
+                document.getElementById('resultMessage').textContent = 'Incorrect. Please try again.';
+                document.getElementById('resultMessage').style.color = 'red';
+            }
+        }
+
+        // Start a new game on page load
+        startNewGame();
+    </script>
+</body>
+</html>
