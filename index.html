@@ -23,8 +23,9 @@
         }
         .link-container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-wrap: wrap; /* Allows wrapping of buttons into multiple rows */
+            justify-content: center; /* Centers the buttons in the container */
+            gap: 10px; /* Space between buttons */
         }
         .link-container a {
             text-decoration: none;
@@ -34,8 +35,12 @@
             padding: 10px 20px;
             margin: 10px 0;
             border-radius: 5px;
-            width: 250px;
             text-align: center;
+            box-sizing: border-box; /* Include padding and margin in width calculation */
+            width: 250px; /* Fixed width for all buttons */
+            flex: 1 0 30%; /* 1st value: flex-grow, 2nd: flex-shrink, 3rd: flex-basis (30% of container width) */
+            max-width: 300px; /* Max width constraint */
+            min-width: 200px; /* Min width constraint */
         }
         .link-container a:hover {
             background-color: #0056b3;
@@ -57,7 +62,7 @@
         <a href="https://simongarvey.github.io/maths/indexlaws.html" target="_blank">Index Laws</a>
         <a href="https://simongarvey.github.io/maths/multquiz.html" target="_blank">Multiplication Quiz</a>
         <a href="https://simongarvey.github.io/maths/equation.html" target="_blank">Equation Quiz</a>
-        <a href="https://simongarvey.github.io/maths/compfun.html" target="_blank">Composite FUNctions</a>
+        <a href="https://simongarvey.github.io/maths/compfun.html" target="_blank">Composite Functions</a>
         <a href="https://simongarvey.github.io/maths/mentalpercents.html" target="_blank">Mental Percentages Quiz</a>
         <a href="https://simongarvey.github.io/maths/angleguess.html" target="_blank">Angle Estimation Game</a>
         <a href="https://simongarvey.github.io/maths/bullsandcows.html" target="_blank">Bulls and Cows Game</a>
