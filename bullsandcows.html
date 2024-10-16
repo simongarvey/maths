@@ -52,7 +52,7 @@
         }
         .attempt {
             margin: 10px 0;
-            font-size: 20px;
+            font-size: 24px;
         }
         .feedback {
             color: red;
@@ -185,7 +185,7 @@
             // Create feedback with bulls ('x') first, then cows ('o')
             feedback = 'x'.repeat(bulls) + 'o'.repeat(cows);
             
-            document.getElementById('history').innerHTML += `<div class="attempt">Attempt ${5 - attempts}: ${userGuess} - <span class="feedback">${feedback}</span></div>`;
+           document.getElementById('history').innerHTML += `<div class="attempt">${userGuess} - <span class="feedback">${feedback}</span></div>`;
             
             if (bulls === 4) {
                 alert('Congratulations! You guessed the number!');
