@@ -71,6 +71,7 @@
     <div id="controls">
         <div>Strikes:</div>
         <div id="strikes"></div>
+        <button id="start-button" onclick="startGame()">Start Game</button>
     </div>
     <div id="game-board" onclick="checkClick(event)">
         <canvas id="grid"></canvas>
@@ -195,6 +196,7 @@
             clearInterval(timerInterval); // Stop the timer
             document.getElementById("message").textContent = message;
             document.getElementById("message").style.color = "black";
+            document.getElementById("start-button").textContent = "Start New Game"; // Reset button text
         }
 
         // Start the game
@@ -206,6 +208,8 @@
             document.getElementById("strikes").innerHTML = "";
             document.getElementById("message").textContent = "";
             document.getElementById("time-left").textContent = timeLeft;
+            document.getElementById("start-button").textContent = "Restart Game"; // Change button text to "Restart Game"
+            document.getElementById("game-board").onclick = checkClick; // Enable clicking
             generateCoordinate();
             drawGrid(); // Draw the grid at the start
             startTimer();
