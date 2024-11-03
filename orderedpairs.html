@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate Click Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: none; /* Hide the default cursor globally */
+        }
+        #game-board {
+            position: relative;
+            width: 450px;
+            height: 450px;
+            border: 1px solid #333;
+            background-color: #f5f5f5;
+            margin-top: 20px;
+        }
+        #grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #game-info p {
+            color: blue;
+        }
+        #target-coordinate {
+            font-weight: bold;
+            color: green;
+        }
+        #message {
+            margin-top: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            width: 450px;
+            margin-top: 10px;
+        }
+        .strike {
+            color: red;
+            font-size: 2em;
+            margin-left: 5px;
+        }
+        /* Custom red dot cursor */
+        .red-dot-cursor {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            pointer-events: none; /* Prevents interaction issues */
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body onmousemove="updateCursor(event)">
+    <h1>Coordinate Click Game</h1>
+    <div id="game-info">
+        <p>Find the coordinate: <span id="target-coordinate"></span></p>
+        <p>Score: <span id="score">0</span> | Time Left: <span id="time-left">30</span>s</p>
+    </div>
+    <div id="controls">
+        <div>Strikes:</div>
+        <div id="strikes"></div>
+    </div>
+    <div id="game-board" onclick="checkClick(event)">
+        <canvas id="grid"></canvas>
+    </div>
+    <div id="message"></div>
+    <!-- Custom red dot cursor element -->
+    <div id="custom-cursor" class="red-dot-cursor"></div>
+
+    <script>
+        let score = 0;
+        let strikes = 0;
+        let timeLeft = 30;
+        let targetX, targetY;
+        let timerInterval;
+
+        // Function to draw the Cartesian plane grid
+        function drawGrid() {
+            const canvas = document.getElementById("grid");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 450;
+            canvas.height = 450;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid lines
+            ctx.strokeStyle = "#ddd";
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= canvas.width; x += 45) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= canvas.height; y += 45) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // Draw labels for -5.5 to 5.5 range
+            ctx.fillStyle = "#333";
+            ctx.font = "12px Arial";
+            for (let i = -5; i <= 5; i++) {
+                if (i !== 0) {
+                    // X-axis labels
+                    ctx.fillText(i, canvas.width / 2 + i * 45 - 5, canvas.height / 2 + 15);
+                    // Y-axis labels
+                    ctx.fillText(-i, canvas.width / 2 - 20, canvas.height / 2 + i * 45 + 5);
+                }
+            }
+        }
+
+        // Function to generate a random coordinate and display it
+        function generateCoordinate() {
+            targetX = Math.floor(Math.random() * 9) - 4;
+            targetY = Math.floor(Math.random() * 9) - 4;
+            document.getElementById("target-coordinate").textContent = `(${targetX}, ${targetY})`;
+        }
+
+        // Function to handle the click on the game board
+        function checkClick(event) {
+            const board = document.getElementById("game-board");
+            const rect = board.getBoundingClientRect();
+
+            // Calculate clicked position in the Cartesian coordinates (assuming origin at the center)
+            const clickX = ((event.clientX - rect.left - rect.width / 2) / (rect.width / 11)).toFixed();
+            const clickY = ((rect.height / 2 - (event.clientY - rect.top)) / (rect.height / 11)).toFixed();
+
+            if (clickX == targetX && clickY == targetY) {
+                score++;
+                document.getElementById("score").textContent = score;
+                document.getElementById("message").textContent = "Correct!";
+                document.getElementById("message").style.color = "green";
+                generateCoordinate(); // Generate a new target
+            } else {
+                strikes++;
+                document.getElementById("message").textContent = "Incorrect!";
+                document.getElementById("message").style.color = "red";
+                document.getElementById("strikes").innerHTML += '<span class="strike">X</span>';
+                
+                // Check if player reached three strikes
+                if (strikes >= 3) {
+                    endGame("Game Over! You reached 3 strikes.");
+                }
+            }
+        }
+
+        // Function to update the red dot cursor position
+        function updateCursor(event) {
+            const cursor = document.getElementById("custom-cursor");
+            cursor.style.left = `${event.clientX}px`;
+            cursor.style.top = `${event.clientY}px`;
+        }
+
+        // Function to start the countdown timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    document.getElementById("time-left").textContent = timeLeft;
+                } else {
+                    clearInterval(timerInterval);
+                    endGame("Time's up!");
+                }
+            }, 1000);
+        }
+
+        // Function to end the game
+        function endGame(message) {
+            document.getElementById("game-board").onclick = null; // Disable clicking
+            clearInterval(timerInterval); // Stop the timer
+            document.getElementById("message").textContent = message;
+            document.getElementById("message").style.color = "black";
+        }
+
+        // Start the game
+        function startGame() {
+            score = 0;
+            strikes = 0;
+            timeLeft = 30;
+            document.getElementById("score").textContent = score;
+            document.getElementById("strikes").innerHTML = "";
+            document.getElementById("message").textContent = "";
+            document.getElementById("time-left").textContent = timeLeft;
+            generateCoordinate();
+            drawGrid(); // Draw the grid at the start
+            startTimer();
+        }
+
+        // Initialize the game on load
+        window.onload = startGame;
+    </script>
+</body>
+</html>
