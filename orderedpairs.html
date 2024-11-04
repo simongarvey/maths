@@ -10,7 +10,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            cursor: none; /* Hide the default cursor globally */
+            cursor: none;
         }
         #game-board {
             position: relative;
@@ -50,14 +50,13 @@
             font-size: 2em;
             margin-left: 5px;
         }
-        /* Custom red dot cursor */
         .red-dot-cursor {
             position: absolute;
             width: 10px;
             height: 10px;
             background-color: red;
             border-radius: 50%;
-            pointer-events: none; /* Prevents interaction issues */
+            pointer-events: none;
             transform: translate(-50%, -50%);
         }
     </style>
@@ -66,7 +65,8 @@
     <h1>Coordinate Click Game</h1>
     <div id="game-info">
         <p>Find the coordinate: <span id="target-coordinate"></span></p>
-        <p>Score: <span id="score">0</span> | Time Left: <span id="time-left">30</span>s</p>
+        <p>Score: <span id="score">0</span> | High Score: <span id="high-score">0</span> | Average Score: <span id="average-score">0</span></p>
+        <p>Time Left: <span id="time-left">30</span>s</p>
     </div>
     <div id="controls">
         <div>Strikes:</div>
@@ -77,17 +77,19 @@
         <canvas id="grid"></canvas>
     </div>
     <div id="message"></div>
-    <!-- Custom red dot cursor element -->
     <div id="custom-cursor" class="red-dot-cursor"></div>
 
     <script>
+        const gridSize = 45;
         let score = 0;
+        let highScore = 0;
         let strikes = 0;
         let timeLeft = 30;
         let targetX, targetY;
         let timerInterval;
+        let totalScores = [];
+        let validGames = 0;
 
-        // Function to draw the Cartesian plane grid
         function drawGrid() {
             const canvas = document.getElementById("grid");
             const ctx = canvas.getContext("2d");
@@ -96,23 +98,21 @@
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw grid lines
             ctx.strokeStyle = "#ddd";
             ctx.lineWidth = 1;
-            for (let x = 0; x <= canvas.width; x += 45) {
+            for (let x = 0; x <= canvas.width; x += gridSize) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, canvas.height);
                 ctx.stroke();
             }
-            for (let y = 0; y <= canvas.height; y += 45) {
+            for (let y = 0; y <= canvas.height; y += gridSize) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(canvas.width, y);
                 ctx.stroke();
             }
             
-            // Draw axes
             ctx.strokeStyle = "#333";
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -122,100 +122,109 @@
             ctx.lineTo(canvas.width, canvas.height / 2);
             ctx.stroke();
             
-            // Draw labels for -5.5 to 5.5 range
             ctx.fillStyle = "#333";
             ctx.font = "12px Arial";
             for (let i = -5; i <= 5; i++) {
                 if (i !== 0) {
-                    // X-axis labels
-                    ctx.fillText(i, canvas.width / 2 + i * 45 - 5, canvas.height / 2 + 15);
-                    // Y-axis labels
-                    ctx.fillText(-i, canvas.width / 2 - 20, canvas.height / 2 + i * 45 + 5);
+                    ctx.fillText(i, canvas.width / 2 + i * gridSize - 5, canvas.height / 2 + 15);
+                    ctx.fillText(-i, canvas.width / 2 - 20, canvas.height / 2 + i * gridSize + 5);
                 }
             }
         }
 
-        // Function to generate a random coordinate and display it
         function generateCoordinate() {
             targetX = Math.floor(Math.random() * 9) - 4;
             targetY = Math.floor(Math.random() * 9) - 4;
             document.getElementById("target-coordinate").textContent = `(${targetX}, ${targetY})`;
         }
 
-        // Function to handle the click on the game board
         function checkClick(event) {
             const board = document.getElementById("game-board");
             const rect = board.getBoundingClientRect();
-
-            // Calculate clicked position in the Cartesian coordinates (assuming origin at the center)
-            const clickX = ((event.clientX - rect.left - rect.width / 2) / (rect.width / 11)).toFixed();
-            const clickY = ((rect.height / 2 - (event.clientY - rect.top)) / (rect.height / 11)).toFixed();
+            const clickX = Math.round((event.clientX - rect.left - rect.width / 2) / gridSize);
+            const clickY = Math.round((rect.height / 2 - (event.clientY - rect.top)) / gridSize);
 
             if (clickX == targetX && clickY == targetY) {
                 score++;
                 document.getElementById("score").textContent = score;
                 document.getElementById("message").textContent = "Correct!";
                 document.getElementById("message").style.color = "green";
-                generateCoordinate(); // Generate a new target
+                generateCoordinate();
             } else {
                 strikes++;
                 document.getElementById("message").textContent = "Incorrect!";
                 document.getElementById("message").style.color = "red";
                 document.getElementById("strikes").innerHTML += '<span class="strike">X</span>';
-                
-                // Check if player reached three strikes
                 if (strikes >= 3) {
-                    endGame("Game Over! You reached 3 strikes.");
+                    endGame("Game Over! You reached 3 strikes.", false);
                 }
             }
         }
 
-        // Function to update the red dot cursor position
         function updateCursor(event) {
             const cursor = document.getElementById("custom-cursor");
-            cursor.style.left = `${event.clientX}px`;
-            cursor.style.top = `${event.clientY}px`;
+            const board = document.getElementById("game-board");
+            const rect = board.getBoundingClientRect();
+            const snapX = Math.round((event.clientX - rect.left) / gridSize) * gridSize;
+            const snapY = Math.round((event.clientY - rect.top) / gridSize) * gridSize;
+            cursor.style.left = `${rect.left + snapX}px`;
+            cursor.style.top = `${rect.top + snapY}px`;
         }
 
-        // Function to start the countdown timer
         function startTimer() {
+            clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if (timeLeft > 0) {
                     timeLeft--;
                     document.getElementById("time-left").textContent = timeLeft;
                 } else {
                     clearInterval(timerInterval);
-                    endGame("Time's up!");
+                    endGame("Time's up!", true);
                 }
             }, 1000);
         }
 
-        // Function to end the game
-        function endGame(message) {
-            document.getElementById("game-board").onclick = null; // Disable clicking
-            clearInterval(timerInterval); // Stop the timer
-            document.getElementById("message").textContent = message;
-            document.getElementById("message").style.color = "black";
-            document.getElementById("start-button").textContent = "Start New Game"; // Reset button text
+        function updatePerformanceScores() {
+            if (score > highScore) {
+                highScore = score;
+                document.getElementById("high-score").textContent = highScore;
+            }
+
+            const validScores = totalScores.reduce((acc, val) => acc + val, 0) / validGames;
+            const averageScore = validGames > 0 ? validScores.toFixed(2) : 0;
+            document.getElementById("average-score").textContent = averageScore;
         }
 
-        // Start the game
+        function endGame(message, validGame) {
+            document.getElementById("game-board").onclick = null;
+            clearInterval(timerInterval);
+            document.getElementById("message").textContent = message;
+            document.getElementById("message").style.color = "black";
+            document.getElementById("start-button").textContent = "Start New Game";
+
+            if (validGame) {
+                totalScores.push(score);
+                validGames++;
+            }
+            updatePerformanceScores();
+        }
+
         function startGame() {
             score = 0;
             strikes = 0;
             timeLeft = 30;
+            clearInterval(timerInterval);
             document.getElementById("score").textContent = score;
             document.getElementById("strikes").innerHTML = "";
             document.getElementById("message").textContent = "";
             document.getElementById("time-left").textContent = timeLeft;
-            document.getElementById("start-button").textContent = "Restart Game"; // Change button text to "Restart Game"
-            document.getElementById("game-board").onclick = checkClick; // Enable clicking
+            document.getElementById("start-button").textContent = "Restart Game";
+            document.getElementById("game-board").onclick = checkClick;
             generateCoordinate();
-            drawGrid(); // Draw the grid at the start
+            drawGrid();
             startTimer();
         }
 
-        // Initialize the game on load
         window.onload = startGame;
     </script>
 </body>
