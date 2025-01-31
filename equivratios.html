@@ -16,6 +16,7 @@
 <body>
     <div id="game-container">
         <h1>Equivalent Ratios Practice</h1>
+        <button id="start-button" onclick="startGame()">Start Game</button>
         <p id="ratio-display"></p>
         <p id="feedback"></p>
         <p>Time left: <span id="timer">30</span> seconds</p>
@@ -25,9 +26,9 @@
     </div>
 
     <script>
-        let timeLeft = 30;
-        let incorrectCount = 0;
-        let correctCount = 0;
+        let timeLeft;
+        let incorrectCount;
+        let correctCount;
         let highestScore = localStorage.getItem("highestScore") || 0;
         let currentRatio = {};
         let timerInterval;
@@ -93,6 +94,8 @@
         }
 
         function startTimer() {
+            timeLeft = 30;
+            document.getElementById("timer").innerText = timeLeft;
             timerInterval = setInterval(() => {
                 timeLeft--;
                 document.getElementById("timer").innerText = timeLeft;
@@ -100,6 +103,18 @@
                     endGame(`Time's up! You got ${correctCount} correct answers.`);
                 }
             }, 1000);
+        }
+
+        function startGame() {
+            clearInterval(timerInterval);
+            incorrectCount = 0;
+            correctCount = 0;
+            document.getElementById("incorrect-count").innerText = incorrectCount;
+            document.getElementById("correct-count").innerText = correctCount;
+            document.getElementById("feedback").innerText = "";
+            document.getElementById("start-button").innerText = "Restart Game";
+            generateRatio();
+            startTimer();
         }
 
         function endGame(message) {
@@ -113,9 +128,6 @@
                 document.getElementById("highest-score").innerText = highestScore;
             }
         }
-
-        generateRatio();
-        startTimer();
     </script>
 </body>
 </html>
