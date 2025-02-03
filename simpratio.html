@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ratio Simplification Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #game-container { margin-top: 50px; }
+        #input-area { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; }
+        #ratio { font-size: 36px; font-weight: bold; }
+        #simplify-text { color: blue; font-size: 48px; display: block; }
+        #equal-sign { font-size: 36px; font-weight: bold; display: none; }
+        #answer { font-size: 24px; padding: 10px; width: 150px; }
+        #message { margin-top: 10px; font-weight: bold; }
+        #start { font-size: 24px; padding: 15px 30px; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Ratio Simplification Game</h1>
+        <p id="simplify-text">Simplify</p>
+        <div id="input-area">
+            <p id="ratio"><span id="ratio-text"></span></p>
+            <p id="equal-sign">=</p>
+            <input type="text" id="answer" disabled>
+        </div>
+        <p id="message"></p>
+        <p>Time Left: <span id="timer">60</span> seconds</p>
+        <p>Score: <span id="score">0</span> | High Score: <span id="high-score">0</span></p>
+        <p>Incorrect Answers: <span id="incorrect">0</span>/3</p>
+        <button onclick="startGame()" id="start">Start</button>
+    </div>
+
+    <script>
+        let timer;
+        let timeLeft = 60;
+        let score = 0;
+        let highScore = 0;
+        let incorrectAnswers = 0;
+        let currentRatio;
+        let isGameActive = false;
+        
+        function getGCD(a, b) {
+            while (b) {
+                [a, b] = [b, a % b];
+            }
+            return a;
+        }
+        
+        function generateRatio() {
+            let num1, num2, gcd;
+            do {
+                num1 = Math.floor(Math.random() * 50) + 10;
+                num2 = Math.floor(Math.random() * 50) + 10;
+                gcd = getGCD(num1, num2);
+            } while (gcd <= 1 || gcd >= 10);
+            
+            currentRatio = { original: `${num1}:${num2}`, simplified: `${num1 / gcd}:${num2 / gcd}` };
+            document.getElementById("ratio-text").textContent = currentRatio.original;
+            document.getElementById("equal-sign").style.display = "inline";
+        }
+        
+        function checkAnswer(event) {
+            if (!isGameActive || event.key !== 'Enter') return;
+            let userAnswer = document.getElementById("answer").value.trim();
+            if (userAnswer === currentRatio.simplified) {
+                score++;
+                document.getElementById("score").textContent = score;
+                document.getElementById("message").textContent = "Correct!";
+            } else {
+                incorrectAnswers++;
+                document.getElementById("incorrect").textContent = incorrectAnswers;
+                document.getElementById("message").textContent = "Incorrect!";
+                if (incorrectAnswers >= 3) {
+                    endGame();
+                    return;
+                }
+            }
+            document.getElementById("answer").value = "";
+            generateRatio();
+        }
+        
+        function startGame() {
+            if (isGameActive) return;
+            isGameActive = true;
+            score = 0;
+            incorrectAnswers = 0;
+            timeLeft = 60;
+            document.getElementById("score").textContent = score;
+            document.getElementById("incorrect").textContent = incorrectAnswers;
+            document.getElementById("message").textContent = "";
+            document.getElementById("start").textContent = "Restart";
+            document.getElementById("answer").disabled = false;
+            document.getElementById("answer").focus();
+            document.getElementById("equal-sign").style.display = "inline";
+            generateRatio();
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function endGame() {
+            clearInterval(timer);
+            isGameActive = false;
+            document.getElementById("answer").disabled = true;
+            document.getElementById("message").textContent = "Game Over!";
+            if (score > highScore) {
+                highScore = score;
+                document.getElementById("high-score").textContent = highScore;
+            }
+        }
+        
+        document.getElementById("answer").addEventListener("keypress", checkAnswer);
+    </script>
+</body>
+</html>
