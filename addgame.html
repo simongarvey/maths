@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Addition Algorithm Practice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+    }
+    table {
+      margin: auto;
+      border-collapse: collapse;
+    }
+    td {
+      width: 60px;
+      height: 70px;
+      font-size: 36px;
+      text-align: center;
+      vertical-align: middle;
+      border: none;
+    }
+    .input-cell {
+      border: 2px solid black;
+      width: 60px;
+      height: 70px;
+      font-size: 36px;
+      text-align: center;
+    }
+    .correct {
+      background-color: lightgreen;
+    }
+    .incorrect {
+      background-color: lightcoral;
+    }
+  </style>
+</head>
+<body>
+  <h1>Addition Algorithm Practice</h1>
+  <div id="problem"></div>
+  <br>
+  <button onclick="checkAnswers()">Check Answers</button>
+  <button onclick="generateProblem()">New Problem</button>
+
+  <script>
+    let num1, num2, sum;
+
+    function generateProblem() {
+      // Generate two 4-digit numbers in the range 1000 to 4999 so that the sum is ≤ 9999.
+      num1 = Math.floor(Math.random() * 4000) + 1000;
+      num2 = Math.floor(Math.random() * 4000) + 1000;
+      sum = num1 + num2;
+      // In our chosen range, worst-case is 4999+4999 = 9998, which is acceptable.
+
+      // Convert numbers to strings (they will be 4-digit numbers)
+      let num1Str = num1.toString();
+      let num2Str = num2.toString();
+      let sumStr  = sum.toString();
+
+      // For each of the 4 columns, randomly decide which row will have the missing digit.
+      // 0 => hide digit from first number, 1 => hide digit from second number, 2 => hide digit from sum.
+      let missingCells = [];
+      for (let i = 0; i < 4; i++) {
+        missingCells[i] = Math.floor(Math.random() * 3);
+      }
+
+      // Build the HTML table.
+      // To maintain alignment, we will use 5 columns in each row:
+      // For the first and sum rows, the first cell is empty.
+      // For the second row, the first cell contains the plus sign.
+      let html = '<table>';
+
+      // Row 0: First number (with an empty cell in the first column)
+      html += '<tr>';
+      html += '<td></td>';  // empty cell for alignment
+      for (let i = 0; i < 4; i++) {
+        if (missingCells[i] === 0) {
+          html += `<td><input class="input-cell" type="text" maxlength="1" data-value="${num1Str[i]}"></td>`;
+        } else {
+          html += `<td>${num1Str[i]}</td>`;
+        }
+      }
+      html += '</tr>';
+
+      // Row 1: Second number (with plus sign in the first cell)
+      html += '<tr>';
+      html += '<td>+</td>'; // plus sign cell
+      for (let i = 0; i < 4; i++) {
+        if (missingCells[i] === 1) {
+          html += `<td><input class="input-cell" type="text" maxlength="1" data-value="${num2Str[i]}"></td>`;
+        } else {
+          html += `<td>${num2Str[i]}</td>`;
+        }
+      }
+      html += '</tr>';
+
+      // Horizontal line row (spanning all 5 cells)
+      html += '<tr><td colspan="5"><hr></td></tr>';
+
+      // Row 2: Sum (with an empty cell in the first column)
+      html += '<tr>';
+      html += '<td></td>';  // empty cell for alignment
+      for (let i = 0; i < 4; i++) {
+        if (missingCells[i] === 2) {
+          html += `<td><input class="input-cell" type="text" maxlength="1" data-value="${sumStr[i]}"></td>`;
+        } else {
+          html += `<td>${sumStr[i]}</td>`;
+        }
+      }
+      html += '</tr>';
+
+      html += '</table>';
+
+      document.getElementById("problem").innerHTML = html;
+    }
+
+    function checkAnswers() {
+      const inputs = document.querySelectorAll(".input-cell");
+      inputs.forEach(input => {
+        if (input.value === input.getAttribute("data-value")) {
+          input.classList.add("correct");
+          input.classList.remove("incorrect");
+        } else {
+          input.classList.add("incorrect");
+          input.classList.remove("correct");
+        }
+      });
+    }
+
+    // Generate the first problem on page load.
+    generateProblem();
+  </script>
+</body>
+</html>
