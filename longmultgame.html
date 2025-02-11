@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Long Multiplication Practice</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 0 auto;
+    }
+    td {
+      width: 40px;
+      height: 50px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 2em;
+      font-family: monospace;
+      border: 1px solid transparent;
+    }
+    .operator {
+      font-weight: bold;
+    }
+    /* Input styling: inherit font size and family from the table cell */
+    input.digit-input {
+      width: 38px;
+      height: 45px;
+      text-align: center;
+      font-size: inherit;
+      font-family: inherit;
+      padding: 0;
+      margin: 0;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .correct {
+      background-color: lightgreen;
+    }
+    .incorrect {
+      background-color: lightcoral;
+    }
+    hr {
+      border: none;
+      border-top: 2px solid #000;
+    }
+    button {
+      font-size: 1.2em;
+      margin: 10px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Long Multiplication Game</h1>
+  <div id="problem-area"></div>
+  <button onclick="checkAnswers()">Submit</button>
+  <button onclick="generateProblem()">New Problem</button>
+
+  <script>
+    // Helper function to create table cells for a row.
+    // It randomly replaces one or two non-blank digits with input boxes.
+    function createCells(charArray, allowMissing) {
+      let digitIndices = [];
+      for (let i = 0; i < charArray.length; i++) {
+        if (charArray[i] !== ' ') {
+          digitIndices.push(i);
+        }
+      }
+      let hideIndices = [];
+      if (allowMissing && digitIndices.length > 0) {
+        // Always hide at least one digit.
+        let idx = digitIndices[Math.floor(Math.random() * digitIndices.length)];
+        hideIndices.push(idx);
+        // Optionally hide a second digit (50% chance).
+        if (digitIndices.length > 1 && Math.random() < 0.5) {
+          let remaining = digitIndices.filter(i => i !== idx);
+          let idx2 = remaining[Math.floor(Math.random() * remaining.length)];
+          hideIndices.push(idx2);
+        }
+      }
+      let cellsHtml = "";
+      for (let i = 0; i < charArray.length; i++) {
+        let cellContent = "";
+        if (allowMissing && hideIndices.includes(i)) {
+          // The correct digit is stored in data-answer.
+          cellContent = `<input type="text" maxlength="1" class="digit-input" data-answer="${charArray[i]}">`;
+        } else {
+          cellContent = (charArray[i] === " ") ? "" : charArray[i];
+        }
+        cellsHtml += `<td>${cellContent}</td>`;
+      }
+      return cellsHtml;
+    }
+
+    function generateProblem() {
+      const problemArea = document.getElementById("problem-area");
+      problemArea.innerHTML = "";
+
+      // Generate a random three-digit number (multiplicand).
+      const num1 = Math.floor(100 + Math.random() * 900);
+      
+      // Generate a two-digit multiplier that never ends in 0.
+      // Tens digit: 1-9; Ones digit: 1-9.
+      const tens = Math.floor(Math.random() * 9) + 1;
+      const ones = Math.floor(Math.random() * 9) + 1;
+      const num2 = tens * 10 + ones;
+
+      // Break the multiplier into ones and tens digits.
+      const multiplierOnes = num2 % 10;
+      const multiplierTens = Math.floor(num2 / 10);
+      
+      // Compute the partial products.
+      const partial1 = num1 * multiplierOnes;
+      const partial2 = num1 * multiplierTens; // Second partial product (to be shifted)
+      const finalAnswer = num1 * num2;
+
+      // Determine the width based on the final answer.
+      const finalStr = finalAnswer.toString();
+      const width = finalStr.length;
+
+      // Pad the strings so that the rightmost (ones) digits line up.
+      const multiplicandStr = num1.toString().padStart(width, " ");
+      const multiplierStr   = num2.toString().padStart(width, " ");
+      const partial1Str     = partial1.toString().padStart(width, " ");
+      // Multiply the second partial by 10 to include the trailing zero.
+      const partial2Str     = (partial2 * 10).toString().padStart(width, " ");
+      const finalAnswerStr  = finalAnswer.toString().padStart(width, " ");
+
+      // Build the table. The extra leftmost column is used for the operator.
+      let tableHtml = "<table>";
+
+      // Row 1: Multiplicand.
+      tableHtml += "<tr><td></td>";
+      for (let ch of multiplicandStr.split("")) {
+        tableHtml += `<td>${(ch === " " ? "" : ch)}</td>`;
+      }
+      tableHtml += "</tr>";
+
+      // Row 2: Multiplier with the multiplication symbol.
+      tableHtml += `<tr><td class="operator">×</td>`;
+      for (let ch of multiplierStr.split("")) {
+        tableHtml += `<td>${(ch === " " ? "" : ch)}</td>`;
+      }
+      tableHtml += "</tr>";
+
+      // Row 3: Horizontal rule.
+      tableHtml += `<tr><td colspan="${width + 1}"><hr></td></tr>`;
+
+      // Row 4: First partial product (ones digit multiplication), with some digits hidden.
+      tableHtml += "<tr><td></td>" + createCells(partial1Str.split(""), true) + "</tr>";
+
+      // Row 5: Second partial product (tens digit multiplication, with trailing zero) with hidden digits.
+      tableHtml += "<tr><td></td>" + createCells(partial2Str.split(""), true) + "</tr>";
+
+      // Row 6: Another horizontal rule.
+      tableHtml += `<tr><td colspan="${width + 1}"><hr></td></tr>`;
+
+      // Row 7: Final answer row with hidden digits.
+      tableHtml += "<tr><td></td>" + createCells(finalAnswerStr.split(""), true) + "</tr>";
+
+      tableHtml += "</table>";
+
+      // Display only the table (without the problem statement above).
+      problemArea.innerHTML = tableHtml;
+    }
+
+    // Check user inputs against the correct answers.
+    function checkAnswers() {
+      const inputs = document.querySelectorAll(".digit-input");
+      inputs.forEach(input => {
+        const userInput = input.value.trim();
+        const correctAnswer = input.getAttribute("data-answer");
+        if (userInput === correctAnswer) {
+          input.classList.add("correct");
+          input.classList.remove("incorrect");
+        } else {
+          input.classList.add("incorrect");
+          input.classList.remove("correct");
+        }
+      });
+    }
+
+    window.onload = generateProblem;
+  </script>
+</body>
+</html>
