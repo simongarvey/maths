@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wages Assessment</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .question { margin-bottom: 15px; }
+        .correct { color: green; }
+        .incorrect { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Wages and Penalty Rates Assessment</h1>
+    <div id="questions"></div>
+    <script>
+        function generateQuestions() {
+            const baseRates = [20, 22, 25, 18, 21];
+            const hoursWorked = [5, 8, 4, 6, 7];
+            const questionsDiv = document.getElementById("questions");
+            questionsDiv.innerHTML = "";
+            
+            for (let i = 0; i < 10; i++) {
+                let baseRate = baseRates[Math.floor(Math.random() * baseRates.length)];
+                let hours = hoursWorked[Math.floor(Math.random() * hoursWorked.length)];
+                let overtimeType = Math.random() < 0.5 ? "time-and-a-half" : "double time";
+                let overtimeMultiplier = overtimeType === "time-and-a-half" ? 1.5 : 2;
+                let overtimeHours = Math.floor(Math.random() * 4) + 1; // 1 to 4 hours overtime
+                let totalPay = (hours * baseRate) + (overtimeHours * baseRate * overtimeMultiplier);
+                
+                let questionDiv = document.createElement("div");
+                questionDiv.classList.add("question");
+                
+                questionDiv.innerHTML = `
+                    <p>Question ${i + 1}: A worker earns $${baseRate}/hour and works ${hours} regular hours. They also work ${overtimeHours} hours at ${overtimeType}. What is their total wage?</p>
+                    <input type="number" id="answer${i}" step="0.01">
+                    <button onclick="checkAnswer(${i}, ${totalPay.toFixed(2)})">Check</button>
+                    <span id="result${i}"></span>
+                `;
+                
+                questionsDiv.appendChild(questionDiv);
+            }
+        }
+
+        function checkAnswer(index, correctAnswer) {
+            let userAnswer = document.getElementById(`answer${index}`).value;
+            let resultSpan = document.getElementById(`result${index}`);
+            
+            if (parseFloat(userAnswer) === correctAnswer) {
+                resultSpan.textContent = "Correct!";
+                resultSpan.className = "correct";
+            } else {
+                resultSpan.textContent = "Incorrect. Try again.";
+                resultSpan.className = "incorrect";
+            }
+        }
+
+        window.onload = generateQuestions;
+    </script>
+</body>
+</html>
