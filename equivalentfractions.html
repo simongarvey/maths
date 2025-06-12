@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Equivalent Fractions Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 50px;
+      background-color: #f0f8ff;
+    }
+
+    .fraction-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin: 30px 0;
+    }
+
+    .fraction {
+      display: inline-block;
+      text-align: center;
+      font-size: 2em;
+    }
+
+    .numerator, .denominator {
+      display: block;
+      min-height: 1.2em;
+    }
+
+    .fraction hr {
+      border: none;
+      border-top: 3px solid #000;
+      margin: 0;
+      width: 60px;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      font-size: 1em;
+      text-align: center;
+      border: 2px solid #888;
+      border-radius: 5px;
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    .status {
+      font-size: 2em;
+      margin: 10px;
+    }
+
+    .score {
+      font-size: 1.2em;
+      margin-top: 5px;
+    }
+
+    #report {
+      margin-top: 30px;
+      font-size: 1.4em;
+      font-weight: bold;
+    }
+
+    #gameArea {
+      display: block;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎯 Equivalent Fractions Challenge!</h1>
+  <p>Type the missing number and press Enter</p>
+
+  <div id="gameArea">
+    <div class="fraction-container">
+      <div class="fraction">
+        <span class="numerator" id="num1"></span>
+        <hr>
+        <span class="denominator" id="den1"></span>
+      </div>
+      <span style="font-size: 2em;">=</span>
+      <div class="fraction">
+        <span class="numerator" id="num2Container"></span>
+        <hr>
+        <span class="denominator" id="den2Container"></span>
+      </div>
+    </div>
+
+    <div class="status" id="statusSymbol"></div>
+    <div class="score" id="scoreDisplay"></div>
+  </div>
+
+  <div id="report" class="hidden"></div>
+
+  <script>
+    let difficulty = 1;
+    let correctCount = 0;
+    let totalCount = 0;
+    let currentAnswer = null;
+    let startTime = null;
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById("scoreDisplay").textContent = `${correctCount}/${totalCount} correct`;
+    }
+
+    function generateQuestion() {
+      if (correctCount === 0) {
+        startTime = performance.now();
+      }
+
+      const mode = Math.random() < 0.5 ? "multiply" : "divide";
+
+      let num1, den1, multiplier, num2, den2;
+
+      if (mode === "multiply") {
+        const base = getRandomInt(1, difficulty + 4);
+        multiplier = getRandomInt(2, difficulty + 2);
+        num1 = getRandomInt(1, base);
+        den1 = getRandomInt(num1 + 1, base + 4);
+        num2 = num1 * multiplier;
+        den2 = den1 * multiplier;
+      } else {
+        multiplier = getRandomInt(2, difficulty + 2);
+        const base = getRandomInt(1, difficulty + 4);
+        num2 = getRandomInt(1, base);
+        den2 = getRandomInt(num2 + 1, base + 4);
+        num1 = num2 * multiplier;
+        den1 = den2 * multiplier;
+      }
+
+      const hideNumerator = Math.random() < 0.5;
+
+      document.getElementById("num1").textContent = num1;
+      document.getElementById("den1").textContent = den1;
+
+      const num2Container = document.getElementById("num2Container");
+      const den2Container = document.getElementById("den2Container");
+
+      if (hideNumerator) {
+        num2Container.innerHTML = `<input type="number" id="answerBox" autofocus />`;
+        den2Container.textContent = den2;
+        currentAnswer = num2;
+      } else {
+        num2Container.textContent = num2;
+        den2Container.innerHTML = `<input type="number" id="answerBox" autofocus />`;
+        currentAnswer = den2;
+      }
+
+      const inputBox = document.getElementById("answerBox");
+      inputBox.focus();
+
+      inputBox.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          checkAnswer(parseInt(inputBox.value));
+        }
+      });
+    }
+
+    function checkAnswer(value) {
+      const status = document.getElementById("statusSymbol");
+
+      if (value === currentAnswer) {
+        status.textContent = "✔️";
+        correctCount++;
+        difficulty++;
+      } else {
+        status.textContent = "❌";
+        difficulty = Math.max(1, difficulty - 1);
+      }
+
+      totalCount++;
+      updateScoreDisplay();
+
+      if (correctCount >= 20) {
+        finishGame();
+        return;
+      }
+
+      setTimeout(() => {
+        status.textContent = "";
+        generateQuestion();
+      }, 1000);
+    }
+
+    function finishGame() {
+      const endTime = performance.now();
+      const timeSeconds = ((endTime - startTime) / 1000).toFixed(1);
+      const percent = ((correctCount / totalCount) * 100).toFixed(1);
+
+      document.getElementById("gameArea").classList.add("hidden");
+      document.getElementById("report").classList.remove("hidden");
+      document.getElementById("report").innerHTML = `
+        🎉 Game complete!<br>
+        ✅ You got <strong>${correctCount}</strong> out of <strong>${totalCount}</strong> correct.<br>
+        📊 Score: <strong>${percent}%</strong><br>
+        ⏱️ Time taken: <strong>${timeSeconds} seconds</strong>
+      `;
+    }
+
+    updateScoreDisplay();
+    generateQuestion();
+  </script>
+</body>
+</html>
