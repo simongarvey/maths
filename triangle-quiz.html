@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Triangle Unknowns Quiz (10 Questions)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#121a33;
+      --muted:#9fb0d0;
+      --text:#eaf0ff;
+      --accent:#7aa2ff;
+      --good:#36d399;
+      --bad:#f87272;
+      --line:#223055;
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#060a14,var(--bg));color:var(--text);}
+    .wrap{max-width:980px;margin:0 auto;padding:24px;}
+    h1{margin:0 0 6px;font-size:28px;letter-spacing:.2px;}
+    p{margin:8px 0;color:var(--muted);line-height:1.4;}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:start;}
+    @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+    .card{background:rgba(18,26,51,.85);border:1px solid rgba(34,48,85,.7);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:16px;}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid rgba(34,48,85,.8);border-radius:999px;background:rgba(10,14,26,.5);color:var(--muted);}
+    .pill b{color:var(--text)}
+    .btn{border:0;border-radius:12px;padding:10px 12px;background:var(--accent);color:#071028;font-weight:700;cursor:pointer;}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
+    .btn.secondary{background:transparent;color:var(--text);border:1px solid rgba(122,162,255,.55);}
+    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(34,48,85,.8);}
+    input[type="text"]{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(34,48,85,.9);background:rgba(7,10,20,.7);color:var(--text);font-size:16px;}
+    label{display:block;margin:10px 0 6px;color:var(--muted);}
+    .hint{font-size:12px;color:var(--muted);}
+    .big{font-size:18px;color:var(--text);}
+    .mono{font-variant-numeric:tabular-nums;}
+    .divider{height:1px;background:rgba(34,48,85,.8);margin:12px 0;}
+    .svgWrap{width:100%;aspect-ratio: 4/3;border-radius:16px;border:1px solid rgba(34,48,85,.9);background:radial-gradient(800px 300px at 40% 10%, rgba(122,162,255,.12), transparent 60%),rgba(7,10,20,.5);overflow:hidden;}
+    table{width:100%;border-collapse:collapse;font-size:14px;}
+    th,td{padding:10px 10px;border-bottom:1px solid rgba(34,48,85,.7);vertical-align:top;}
+    th{text-align:left;color:var(--muted);font-weight:700;}
+    .tag{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(34,48,85,.8);}
+    .tag.good{color:var(--good);border-color:rgba(54,211,153,.35);background:rgba(54,211,153,.08);}
+    .tag.bad{color:var(--bad);border-color:rgba(248,114,114,.35);background:rgba(248,114,114,.08);}
+    .small{font-size:12px;color:var(--muted);}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;padding:2px 6px;border-radius:8px;border:1px solid rgba(34,48,85,.8);background:rgba(10,14,26,.5);color:var(--muted);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Triangles: Find the Unknown Side or Angle</h1>
+    <p>10 questions. Each question shows a triangle diagram with some measurements. Find the missing value and enter your answer <b>to the nearest whole number</b>.</p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div class="row">
+            <span class="pill mono"><b id="qCount">–</b></span>
+            <span class="pill mono">Time: <b id="timer">0.0s</b></span>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="newSetBtn" title="Generate a new set of 10 questions">New set</button>
+            <button class="btn" id="startBtn">Start</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="quizArea" style="display:none;">
+          <div class="big" id="prompt" style="margin-bottom:10px;"></div>
+          <div class="svgWrap" aria-label="triangle diagram">
+            <svg id="svg" viewBox="0 0 800 600" width="100%" height="100%" role="img"></svg>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="gap:12px;align-items:flex-end;">
+            <div style="flex:1;min-width:240px;">
+              <label for="answer">Your answer (nearest whole number)</label>
+              <input id="answer" type="text" inputmode="decimal" placeholder="e.g. 42" />
+              
+            </div>
+            <div class="row">
+              <button class="btn secondary" id="skipBtn" title="Skip counts as incorrect">Skip</button>
+              <button class="btn" id="submitBtn">Submit</button>
+            </div>
+          </div>
+
+          <div class="small" style="margin-top:10px;">You can press <span class="kbd">Enter</span> to submit.</div>
+        </div>
+
+        <div id="preStart" class="small" style="padding:12px 0;">
+          Press <b>Start</b> to begin. The timer for each question starts when it appears.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <div style="font-weight:800;">Results</div>
+            <div class="small">Shown after you finish all 10 questions.</div>
+          </div>
+          <button class="btn secondary" id="restartBtn" style="display:none;">Restart</button>
+        </div>
+        <div class="divider"></div>
+        <div id="resultsArea" class="small">No results yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Math helpers ----------
+    const deg = (rad) => rad * 180 / Math.PI;
+    const rad = (deg) => deg * Math.PI / 180;
+    const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+    function roundWhole(x){
+      // Small epsilon helps avoid 59.999999999 -> 60 issues.
+      return Math.round(x + 1e-10);
+    }
+
+    function fmtNumber(x){
+      // Show as integer if close, else 1 decimal.
+      const r = Math.round(x);
+      return Math.abs(x - r) < 1e-9 ? String(r) : x.toFixed(1);
+    }
+
+    function safeAcos(v){
+      return Math.acos(clamp(v, -1, 1));
+    }
+
+    // ---------- Triangle generation (SSS -> coordinates) ----------
+    function randomTriangleSides(){
+      // Choose sides 6..25 with triangle inequality, avoiding super-thin triangles.
+      while(true){
+        const a = 6 + Math.random()*19;
+        const b = 6 + Math.random()*19;
+        const c = 6 + Math.random()*19;
+        const sides = [a,b,c].sort((x,y)=>x-y);
+        if(sides[0] + sides[1] <= sides[2]) continue;
+        // Avoid very small angles (skinny triangles)
+        // Compute angles quickly using cosine law
+        const A = deg(safeAcos((b*b + c*c - a*a)/(2*b*c)));
+        const B = deg(safeAcos((a*a + c*c - b*b)/(2*a*c)));
+        const C = 180 - A - B;
+        const minAng = Math.min(A,B,C);
+        const maxAng = Math.max(A,B,C);
+        if(minAng < 25 || maxAng > 130) continue;
+        return {a,b,c,A,B,C};
+      }
+    }
+
+    function triangleCoordsFromSides({a,b,c}){
+      // Standard labeling:
+      // A opposite a=BC, B opposite b=AC, C opposite c=AB.
+      // Place A at (0,0), B at (c,0), compute C from b and a.
+      const Ax=0, Ay=0;
+      const Bx=c, By=0;
+      const x = (b*b + c*c - a*a) / (2*c);
+      const y = Math.sqrt(Math.max(0, b*b - x*x));
+      return {
+        A:{x:Ax,y:Ay},
+        B:{x:Bx,y:By},
+        C:{x:x,y:y}
+      };
+    }
+
+    // ---------- Question generation ----------
+    function makeQuestion(){
+      const tri = randomTriangleSides();
+
+      // Build a question type.
+      // Types:
+      // 1) SAS -> unknown side
+      // 2) SSS -> unknown angle
+      // 3) AAS/ASA -> unknown side (law of sines)
+      // 4) Two angles -> unknown angle (angle sum)
+      const types = ["SAS_side","SSS_angle","AAS_side","AngleSum_angle"]; 
+      const type = types[Math.floor(Math.random()*types.length)];
+
+      const letters = ["A","B","C"]; // angles
+      const sides = ["a","b","c"];  // opposite angles
+
+      const show = {a:null,b:null,c:null,A:null,B:null,C:null};
+      const ask = {key:null, kind:null}; // kind: 'side'|'angle'
+      let summary;
+
+      // Choose what to show/ask using the exact triangle, but compute the answer
+      // from the rounded displayed givens to prevent solution/rounding mismatches.
+      if(type === "SAS_side"){
+        const angleKey = letters[Math.floor(Math.random()*3)];
+        if(angleKey === "A"){
+          show.b = tri.b; show.c = tri.c; show.A = tri.A; ask.key = "a"; ask.kind = "side";
+          summary = `Given b=${roundWhole(tri.b)}, c=${roundWhole(tri.c)}, A=${roundWhole(tri.A)}°, find side a.`;
+        } else if(angleKey === "B"){
+          show.a = tri.a; show.c = tri.c; show.B = tri.B; ask.key = "b"; ask.kind = "side";
+          summary = `Given a=${roundWhole(tri.a)}, c=${roundWhole(tri.c)}, B=${roundWhole(tri.B)}°, find side b.`;
+        } else {
+          show.a = tri.a; show.b = tri.b; show.C = tri.C; ask.key = "c"; ask.kind = "side";
+          summary = `Given a=${roundWhole(tri.a)}, b=${roundWhole(tri.b)}, C=${roundWhole(tri.C)}°, find side c.`;
+        }
+      }
+
+      if(type === "SSS_angle"){
+        const angleKey = letters[Math.floor(Math.random()*3)];
+        show.a = tri.a; show.b = tri.b; show.c = tri.c;
+        ask.key = angleKey; ask.kind = "angle";
+        summary = `Given a=${roundWhole(tri.a)}, b=${roundWhole(tri.b)}, c=${roundWhole(tri.c)}, find angle ${angleKey} (°).`;
+      }
+
+      if(type === "AAS_side"){
+        const knownSideKey = sides[Math.floor(Math.random()*3)];
+        let askSideKey = sides[Math.floor(Math.random()*3)];
+        while(askSideKey === knownSideKey) askSideKey = sides[Math.floor(Math.random()*3)];
+
+        const knownAngleKey = letters[sides.indexOf(knownSideKey)];
+        const askAngleKey = letters[sides.indexOf(askSideKey)];
+
+        show[knownSideKey] = tri[knownSideKey];
+        show[knownAngleKey] = tri[knownAngleKey];
+        const otherAngleKey = letters.find(k => k !== askAngleKey && k !== knownAngleKey);
+        show[otherAngleKey] = tri[otherAngleKey];
+
+        ask.key = askSideKey; ask.kind = "side";
+        summary = `Given ${knownSideKey}=${roundWhole(tri[knownSideKey])}, angles ${knownAngleKey}=${roundWhole(tri[knownAngleKey])}° and ${otherAngleKey}=${roundWhole(tri[otherAngleKey])}°, find side ${askSideKey}.`;
+      }
+
+      if(type === "AngleSum_angle"){
+        const missing = letters[Math.floor(Math.random()*3)];
+        const shown = letters.filter(x=>x!==missing);
+        show[shown[0]] = tri[shown[0]];
+        show[shown[1]] = tri[shown[1]];
+        ask.key = missing; ask.kind = "angle";
+        summary = `Given angles ${shown[0]}=${roundWhole(tri[shown[0]])}° and ${shown[1]}=${roundWhole(tri[shown[1]])}°, find angle ${missing} (°).`;
+      }
+
+      // Convert shown values to rounded display values (nearest whole number).
+      const display = {};
+      for(const k of Object.keys(show)){
+        display[k] = (show[k] == null) ? null : roundWhole(show[k]);
+      }
+
+      // ---- Compute the correct answer from the *displayed* givens ----
+      // This prevents "rounding errors" where the displayed givens imply a slightly different answer.
+      let correctExactFromDisplay = NaN;
+      let valid = true;
+
+      if(ask.kind === "side"){
+        if(type === "SAS_side"){
+          if(ask.key === "a"){
+            const b = display.b, c = display.c, A = display.A;
+            correctExactFromDisplay = Math.sqrt(Math.max(0, b*b + c*c - 2*b*c*Math.cos(rad(A))));
+          } else if(ask.key === "b"){
+            const a = display.a, c = display.c, B = display.B;
+            correctExactFromDisplay = Math.sqrt(Math.max(0, a*a + c*c - 2*a*c*Math.cos(rad(B))));
+          } else {
+            const a = display.a, b = display.b, C = display.C;
+            correctExactFromDisplay = Math.sqrt(Math.max(0, a*a + b*b - 2*a*b*Math.cos(rad(C))));
+          }
+        }
+
+        if(type === "AAS_side"){
+          // Law of sines: side / sin(opposite angle) is constant.
+          const knownSideKey = sides.find(s => display[s] != null);
+          const knownAngleKey = letters[sides.indexOf(knownSideKey)];
+
+          const knownSide = display[knownSideKey];
+          const knownAngle = display[knownAngleKey];
+
+          const askSideKey = ask.key;
+          const askAngleKey = letters[sides.indexOf(askSideKey)];
+
+          // If the asked angle isn't shown, compute it from angle sum using the two shown angles.
+          let askAngle = display[askAngleKey];
+          if(askAngle == null){
+            const shownAngles = letters.filter(k => display[k] != null);
+            const sumShown = shownAngles.reduce((s,k)=>s+display[k],0);
+            askAngle = 180 - sumShown;
+          }
+
+          if(!(knownSide > 0) || !(knownAngle > 0) || !(askAngle > 0) || knownAngle + askAngle >= 180){
+            valid = false;
+          } else {
+            correctExactFromDisplay = knownSide * Math.sin(rad(askAngle)) / Math.sin(rad(knownAngle));
+          }
+        }
+      } else {
+        // ask.kind === "angle"
+        if(type === "SSS_angle"){
+          const a = display.a, b = display.b, c = display.c;
+          // Ensure triangle inequality still holds after rounding.
+          if(a + b <= c || a + c <= b || b + c <= a){
+            valid = false;
+          } else {
+            if(ask.key === "A"){
+              correctExactFromDisplay = deg(safeAcos((b*b + c*c - a*a)/(2*b*c)));
+            } else if(ask.key === "B"){
+              correctExactFromDisplay = deg(safeAcos((a*a + c*c - b*b)/(2*a*c)));
+            } else {
+              correctExactFromDisplay = deg(safeAcos((a*a + b*b - c*c)/(2*a*b)));
+            }
+          }
+        }
+
+        if(type === "AngleSum_angle"){
+          const shownAngles = letters.filter(k => display[k] != null);
+          const sumShown = shownAngles.reduce((s,k)=>s+display[k],0);
+          correctExactFromDisplay = 180 - sumShown;
+          if(!(correctExactFromDisplay > 0)) valid = false;
+        }
+      }
+
+      if(!Number.isFinite(correctExactFromDisplay)) valid = false;
+
+      const askLabel = ask.kind === "side" ? `side ${ask.key}` : `angle ${ask.key} (°)`;
+      const prompt = `Find ${askLabel}. Enter your answer to the nearest whole number.`;
+
+      return {
+        triangle: tri,
+        display,
+        ask,
+        type,
+        correctExact: correctExactFromDisplay,
+        correctWhole: roundWhole(correctExactFromDisplay),
+        prompt,
+        summary,
+        valid
+      };
+    }
+
+    function makeQuestionSet(n=10){
+      const set = [];
+      while(set.length < n){
+        const q = makeQuestion();
+        // Ensure we don't accidentally ask a value that is also shown and that the rounded givens
+        // still define a valid solvable triangle.
+        if(q.display[q.ask.key] != null) continue;
+        if(!q.valid) continue;
+        set.push(q);
+      }
+      return set;
+    }
+
+    // ---------- SVG drawing ----------
+    function svgEl(tag, attrs={}){
+      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for(const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+      return el;
+    }
+
+    function drawTriangle(svg, q){
+      while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+      const {a,b,c} = q.triangle;
+      const pts = triangleCoordsFromSides({a,b,c});
+
+      // Fit points into viewBox with padding.
+      const pad = 80;
+      const raw = [pts.A, pts.B, pts.C];
+      const minX = Math.min(...raw.map(p=>p.x));
+      const maxX = Math.max(...raw.map(p=>p.x));
+      const minY = Math.min(...raw.map(p=>p.y));
+      const maxY = Math.max(...raw.map(p=>p.y));
+
+      const vbW = 800, vbH = 600;
+      const w = maxX-minX, h = maxY-minY;
+      const scale = Math.min((vbW-2*pad)/w, (vbH-2*pad)/h);
+
+      function map(p){
+        return {
+          x: pad + (p.x - minX)*scale,
+          y: vbH - (pad + (p.y - minY)*scale) // invert y for nicer view
+        };
+      }
+
+      const A = map(pts.A), B = map(pts.B), C = map(pts.C);
+
+      // Triangle outline
+      svg.appendChild(svgEl("polygon", {
+        points: `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`,
+        fill: "rgba(122,162,255,0.08)",
+        stroke: "rgba(122,162,255,0.85)",
+        "stroke-width": "4",
+        "stroke-linejoin":"round"
+      }));
+
+      // Vertex labels
+      const vLabels = [
+        {p:A, t:"A"},
+        {p:B, t:"B"},
+        {p:C, t:"C"}
+      ];
+      for(const v of vLabels){
+        const g = svgEl("g");
+        g.appendChild(svgEl("circle", {cx:v.p.x, cy:v.p.y, r:"7", fill:"rgba(234,240,255,0.95)"}));
+        const tx = svgEl("text", {x:v.p.x+10, y:v.p.y-10, fill:"rgba(234,240,255,0.95)", "font-size":"22", "font-weight":"800"});
+        tx.textContent = v.t;
+        g.appendChild(tx);
+        svg.appendChild(g);
+      }
+
+      // Helper to place side text near midpoint
+      function sideLabel(p1,p2,text){
+        const mx = (p1.x+p2.x)/2;
+        const my = (p1.y+p2.y)/2;
+        const dx = p2.x-p1.x, dy = p2.y-p1.y;
+        const len = Math.hypot(dx,dy) || 1;
+        const nx = -dy/len, ny = dx/len; // normal
+        const x = mx + nx*18;
+        const y = my + ny*18;
+        const bg = svgEl("rect", {x:x-34,y:y-20,width:"88",height:"40",rx:"10",fill:"rgba(7,10,20,0.75)",stroke:"rgba(34,48,85,0.9)"});
+        const t = svgEl("text", {x:x, y:y, fill:"rgba(234,240,255,0.95)", "font-size":"24", "font-weight":"800", "text-anchor":"middle", "dominant-baseline":"middle"});
+        t.textContent = text;
+        svg.appendChild(bg);
+        svg.appendChild(t);
+      }
+
+      // Side labels: a=BC, b=AC, c=AB
+      const disp = q.display;
+      const aText = disp.a == null ? "a = ?" : `a = ${disp.a}`;
+      const bText = disp.b == null ? "b = ?" : `b = ${disp.b}`;
+      const cText = disp.c == null ? "c = ?" : `c = ${disp.c}`;
+      sideLabel(B,C,aText);
+      sideLabel(A,C,bText);
+      sideLabel(A,B,cText);
+
+      // Angle labels near vertices
+      function angleLabel(p, text, toCenter){
+        const vx = toCenter.x - p.x;
+        const vy = toCenter.y - p.y;
+        const len = Math.hypot(vx,vy) || 1;
+        const x = p.x + (vx/len)*40;
+        const y = p.y + (vy/len)*40;
+        const bg = svgEl("rect", {x:x-38,y:y-18,width:"96",height:"38",rx:"10",fill:"rgba(7,10,20,0.75)",stroke:"rgba(34,48,85,0.9)"});
+        const t = svgEl("text", {x:x, y:y, fill:"rgba(234,240,255,0.95)", "font-size":"24", "font-weight":"800", "text-anchor":"middle", "dominant-baseline":"middle"});
+        t.textContent = text;
+        svg.appendChild(bg);
+        svg.appendChild(t);
+      }
+
+      const center = {x:(A.x+B.x+C.x)/3, y:(A.y+B.y+C.y)/3};
+      const AText = disp.A == null ? "A = ?°" : `A = ${disp.A}°`;
+      const BText = disp.B == null ? "B = ?°" : `B = ${disp.B}°`;
+      const CText = disp.C == null ? "C = ?°" : `C = ${disp.C}°`;
+      angleLabel(A, AText, center);
+      angleLabel(B, BText, center);
+      angleLabel(C, CText, center);
+
+      // Small note about what is asked
+      const ask = q.ask.kind === "side" ? `Find ${q.ask.key}` : `Find ${q.ask.key}°`;
+      const banner = svgEl("text", {x:"400", y:"42", fill:"rgba(159,176,208,0.95)", "font-size":"24", "font-weight":"700", "text-anchor":"middle"});
+      banner.textContent = ask;
+      svg.appendChild(banner);
+    }
+
+    // ---------- Quiz state ----------
+    let questions = makeQuestionSet(10);
+    let index = -1;
+    let running = false;
+    let tickHandle = null;
+    let qStart = null;
+
+    const qCountEl = document.getElementById("qCount");
+    const timerEl = document.getElementById("timer");
+    const promptEl = document.getElementById("prompt");
+    const svg = document.getElementById("svg");
+    const answerEl = document.getElementById("answer");
+
+    const startBtn = document.getElementById("startBtn");
+    const newSetBtn = document.getElementById("newSetBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    const quizArea = document.getElementById("quizArea");
+    const preStart = document.getElementById("preStart");
+
+    const submitBtn = document.getElementById("submitBtn");
+    const skipBtn = document.getElementById("skipBtn");
+    const resultsArea = document.getElementById("resultsArea");
+
+    function resetUI(){
+      qCountEl.textContent = "Ready";
+      timerEl.textContent = "0.0s";
+      promptEl.textContent = "";
+      while(svg.firstChild) svg.removeChild(svg.firstChild);
+      resultsArea.innerHTML = "No results yet.";
+      restartBtn.style.display = "none";
+      quizArea.style.display = "none";
+      preStart.style.display = "block";
+      startBtn.disabled = false;
+      running = false;
+      index = -1;
+      if(tickHandle) clearInterval(tickHandle);
+      tickHandle = null;
+    }
+
+    function newSet(){
+      questions = makeQuestionSet(10);
+      for(const q of questions){
+        q.userAnswer = null;
+        q.timeSec = null;
+        q.correct = null;
+      }
+      resetUI();
+    }
+
+    function startQuiz(){
+      if(running) return;
+      running = true;
+      startBtn.disabled = true;
+      preStart.style.display = "none";
+      quizArea.style.display = "block";
+      resultsArea.innerHTML = "In progress…";
+      nextQuestion();
+    }
+
+    function nextQuestion(){
+      index++;
+      if(index >= questions.length){
+        finishQuiz();
+        return;
+      }
+      const q = questions[index];
+      qCountEl.textContent = `Question ${index+1} / ${questions.length}`;
+      promptEl.textContent = q.prompt;
+      answerEl.value = "";
+      answerEl.focus();
+      drawTriangle(svg, q);
+
+      // timing
+      qStart = performance.now();
+      timerEl.textContent = "0.0s";
+      if(tickHandle) clearInterval(tickHandle);
+      tickHandle = setInterval(()=>{
+        const t = (performance.now() - qStart)/1000;
+        timerEl.textContent = `${t.toFixed(1)}s`;
+      }, 100);
+    }
+
+    function gradeCurrent(userText){
+      const q = questions[index];
+      const qEnd = performance.now();
+      const tSec = (qEnd - qStart)/1000;
+      q.timeSec = tSec;
+
+      let user = null;
+      let ok = false;
+
+      if(userText != null){
+        const cleaned = String(userText).trim().replace(/,/g,"");
+        if(cleaned.length){
+          const num = Number(cleaned);
+          if(Number.isFinite(num)){
+            user = num;
+            ok = roundWhole(num) === q.correctWhole;
+          }
+        }
+      }
+
+      q.userAnswer = user;
+      q.correct = ok;
+
+      // move on
+      nextQuestion();
+    }
+
+    function finishQuiz(){
+      if(tickHandle) clearInterval(tickHandle);
+      tickHandle = null;
+      timerEl.textContent = "–";
+      qCountEl.textContent = "Done";
+      quizArea.style.display = "none";
+      preStart.style.display = "none";
+      restartBtn.style.display = "inline-flex";
+
+      const totalCorrect = questions.filter(q=>q.correct).length;
+      const totalTime = questions.reduce((s,q)=>s+(q.timeSec||0),0);
+
+      const parts = [];
+      parts.push(`<div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px;">
+        <div>
+          <div style="font-weight:900;font-size:18px;">Summary</div>
+          <div class="small">Correct: <b>${totalCorrect}</b> / ${questions.length} &nbsp;•&nbsp; Total time: <b>${totalTime.toFixed(1)}s</b></div>
+        </div>
+        <div class="pill mono"><b>${Math.round((totalCorrect/questions.length)*100)}%</b></div>
+      </div>`);
+
+      parts.push(`<div class="divider"></div>`);
+
+      parts.push(`<table>
+        <thead>
+          <tr>
+            <th style="width:52px;">#</th>
+            <th>Question</th>
+            <th style="width:140px;">Your answer</th>
+            <th style="width:160px;">Correct answer</th>
+            <th style="width:120px;">Result</th>
+            <th style="width:110px;">Time</th>
+          </tr>
+        </thead>
+        <tbody>`);
+
+      questions.forEach((q,i)=>{
+        const ua = (q.userAnswer == null) ? "(blank)" : String(roundWhole(q.userAnswer));
+        const ca = String(q.correctWhole);
+        const res = q.correct ? `<span class="tag good">✔ Correct</span>` : `<span class="tag bad">✖ Incorrect</span>`;
+        const time = (q.timeSec == null) ? "–" : `${q.timeSec.toFixed(1)}s`;
+        parts.push(`<tr>
+          <td class="mono">${i+1}</td>
+          <td>${escapeHtml(q.summary)}</td>
+          <td class="mono">${escapeHtml(ua)}</td>
+          <td class="mono">${escapeHtml(ca)}</td>
+          <td>${res}</td>
+          <td class="mono">${escapeHtml(time)}</td>
+        </tr>`);
+      });
+
+      parts.push(`</tbody></table>`);
+      resultsArea.innerHTML = parts.join("\n");
+
+      // Clear diagram
+      while(svg.firstChild) svg.removeChild(svg.firstChild);
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/\"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+    }
+
+    // ---------- Events ----------
+    startBtn.addEventListener("click", startQuiz);
+    newSetBtn.addEventListener("click", newSet);
+    restartBtn.addEventListener("click", () => {
+      // Restart using the same 10 questions (answers cleared)
+      for(const q of questions){
+        q.userAnswer = null;
+        q.timeSec = null;
+        q.correct = null;
+      }
+      resetUI();
+    });
+
+    submitBtn.addEventListener("click", () => gradeCurrent(answerEl.value));
+    skipBtn.addEventListener("click", () => gradeCurrent(null));
+
+    answerEl.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){
+        e.preventDefault();
+        gradeCurrent(answerEl.value);
+      }
+    });
+
+    // Initial state
+    newSet();
+  </script>
+</body>
+</html>
