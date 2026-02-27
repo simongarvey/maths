@@ -1,86 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maths Drills</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            text-align: center;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            font-size: 36px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 18px;
-            color: #555;
-            margin-bottom: 30px;
-        }
-        .link-container {
-            display: flex;
-            flex-wrap: wrap; /* Allows wrapping of buttons into multiple rows */
-            justify-content: center; /* Centers the buttons in the container */
-            gap: 10px; /* Space between buttons */
-        }
-        .link-container a {
-            text-decoration: none;
-            font-size: 20px;
-            color: white;
-            background-color: #007BFF;
-            padding: 10px 20px;
-            margin: 10px 0;
-            border-radius: 5px;
-            text-align: center;
-            box-sizing: border-box; /* Include padding and margin in width calculation */
-            width: 250px; /* Fixed width for all buttons */
-            flex: 1 0 30%; /* 1st value: flex-grow, 2nd: flex-shrink, 3rd: flex-basis (30% of container width) */
-            max-width: 300px; /* Max width constraint */
-            min-width: 200px; /* Min width constraint */
-        }
-        .link-container a:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maths Drills</title>
+
+  <style>
+    :root{
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #4b5563;
+      --border: #e5e7eb;
+      --blue: #1d4ed8;
+      --blueHover:#1e40af;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container{
+      width: min(1100px, 92%);
+      margin: 38px auto 60px;
+    }
+
+    header{
+      text-align:center;
+      margin-bottom: 26px;
+    }
+
+    h1{
+      margin:0 0 10px;
+      font-size: 40px;
+    }
+
+    p.lead{
+      margin:0 auto;
+      max-width: 80ch;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 850px){
+      .grid{ grid-template-columns: 1fr; }
+      h1{ font-size: 34px; }
+    }
+
+    .category{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.05);
+    }
+
+    .category h2{
+      margin: 0 0 12px;
+      font-size: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .links{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 520px){
+      .links{ grid-template-columns: 1fr; }
+    }
+
+    a.btn{
+      display:block;
+      text-decoration:none;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--blue);
+      padding: 12px 14px;
+      border-radius: 10px;
+      text-align:center;
+      transition: transform .05s ease, background .15s ease;
+    }
+
+    a.btn:hover{
+      background: var(--blueHover);
+    }
+
+    a.btn:active{
+      transform: translateY(1px);
+    }
+
+    footer{
+      text-align:center;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
 </head>
+
 <body>
+  <div class="container">
 
-    <h1>Maths Drills</h1>
-    <p>
+    <header>
+      <h1>Maths Drills</h1>
+      <p class="lead">
         Here you will find various activities designed to practice different mathematical skills.
-        The aim of these activities is to use repetition to reinforce ideas and to improve recall and speed of calculations.
-        Think of each activity as a game against yourself where you are continually striving to improve.
-    </p>
+        The aim of these activities is to use repetition to reinforce ideas and improve recall and speed.
+        Think of each activity as a game against yourself where you continually strive to improve.
+      </p>
+    </header>
 
-    <div class="link-container">
-        <a href="https://simongarvey.github.io/maths/percentofamount.html" target="_blank">Percentages of Amounts</a>
-        <a href="https://simongarvey.github.io/maths/equivalentfractions.html" target="_blank">Equivalent Fractions</a>
-        <a href="https://simongarvey.github.io/maths/match2.html" target="_blank">Fractions to Percentages</a>
-        <a href="https://simongarvey.github.io/maths/indexlaws.html" target="_blank">Index Laws</a>
-        <a href="https://simongarvey.github.io/maths/multquiz.html" target="_blank">Multiplication Quiz</a>
-        <a href="https://simongarvey.github.io/maths/equation.html" target="_blank">Equation Quiz</a>
-        <a href="https://simongarvey.github.io/maths/compfun.html" target="_blank">Composite FUNctions</a>
-        <a href="https://simongarvey.github.io/maths/mentalpercents.html" target="_blank">Mental Percentages Quiz</a>
-        <a href="https://simongarvey.github.io/maths/angleguess.html" target="_blank">Angle Estimation Game</a>
-        <a href="https://simongarvey.github.io/maths/bullsandcows.html" target="_blank">Bulls and Cows Game</a>
-        <a href="https://simongarvey.github.io/maths/arithmagon.html" target="_blank">Arithmagon Game</a>
-        <a href="https://simongarvey.github.io/maths/orderedpairs.html" target="_blank">Coordinate Click</a>
-        <a href="https://simongarvey.github.io/maths/equivratios.html" target="_blank">Equivalent Ratios</a>
-        <a href="https://simongarvey.github.io/maths/simpratio.html" target="_blank">Simplifying Ratios</a>
-        <a href="https://simongarvey.github.io/maths/addgame.html" target="_blank">Addition Game</a>
-        <a href="https://simongarvey.github.io/maths/longmultgame.html" target="_blank">Long Multiplication Practice</a>
-        <a href="https://simongarvey.github.io/maths/wagesandovertime.html" target="_blank">Wages and Overtime Practice</a>
-        <a href="https://simongarvey.github.io/maths/triangle-quiz.html" target="_blank">Terrific Trigonometry Triangles</a>
-        <a href="https://simongarvey.github.io/maths/expanding_brackets.html" target="_blank">Expanding Brackets</a>
-        <a href="https://simongarvey.github.io/maths/cards.html" target="_blank">Playing Cards Simulator</a>
-    </div>
+    <main class="grid">
 
+      <!-- Fractions, Decimals and Percentages -->
+      <section class="category">
+        <h2>Fractions, Decimals and Percentages</h2>
+        <div class="links">
+          <a class="btn" href="https://simongarvey.github.io/maths/percentofamount.html" target="_blank">Percentages of Amounts</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/equivalentfractions.html" target="_blank">Equivalent Fractions</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/match2.html" target="_blank">Fractions to Percentages</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/mentalpercents.html" target="_blank">Mental Percentages Quiz</a>
+        </div>
+      </section>
+
+      <!-- Number Operations -->
+      <section class="category">
+        <h2>Number Operations</h2>
+        <div class="links">
+          <a class="btn" href="https://simongarvey.github.io/maths/multquiz.html" target="_blank">Multiplication Quiz</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/addgame.html" target="_blank">Addition Game</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/longmultgame.html" target="_blank">Long Multiplication Practice</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/indexlaws.html" target="_blank">Index Laws</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/equivratios.html" target="_blank">Equivalent Ratios</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/simpratio.html" target="_blank">Simplifying Ratios</a>
+        </div>
+      </section>
+
+      <!-- Algebra -->
+      <section class="category">
+        <h2>Algebra</h2>
+        <div class="links">
+          <a class="btn" href="https://simongarvey.github.io/maths/equation.html" target="_blank">Equation Quiz</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/compfun.html" target="_blank">Composite FUNctions</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/expanding_brackets.html" target="_blank">Expanding Brackets</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/orderedpairs.html" target="_blank">Coordinate Click</a>
+        </div>
+      </section>
+
+      <!-- Financial Mathematics -->
+      <section class="category">
+        <h2>Financial Mathematics</h2>
+        <div class="links">
+          <a class="btn" href="https://simongarvey.github.io/maths/wagesandovertime.html" target="_blank">Wages and Overtime Practice</a>
+        </div>
+      </section>
+
+      <!-- Pythagoras and Trigonometry -->
+      <section class="category">
+        <h2>Pythagoras and Trigonometry</h2>
+        <div class="links">
+          <a class="btn" href="https://simongarvey.github.io/maths/triangle-quiz.html" target="_blank">Terrific Trigonometry Triangles</a>
+        </div>
+      </section>
+
+      <!-- Geometry -->
+      <section class="category">
+        <h2>Geometry</h2>
+        <div class="links">
+          <a class="btn" href="https://simongarvey.github.io/maths/angleguess.html" target="_blank">Angle Estimation Game</a>
+        </div>
+      </section>
+
+      <!-- Other -->
+      <section class="category">
+        <h2>Other</h2>
+        <div class="links">
+          <a class="btn" href="https://simongarvey.github.io/maths/bullsandcows.html" target="_blank">Bulls and Cows Game</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/cards.html" target="_blank">Playing Cards Simulator</a>
+          <a class="btn" href="https://simongarvey.github.io/maths/arithmagon.html" target="_blank">Arithmagon Game</a>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      © Maths Drills
+    </footer>
+
+  </div>
 </body>
 </html>
-
-
-
