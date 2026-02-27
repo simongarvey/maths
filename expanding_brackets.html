@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Distributive Rule Expansion Game</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#111a2e;
+      --muted:#97a3ba;
+      --text:#e9eefc;
+      --accent:#6aa9ff;
+      --good:#37d67a;
+      --bad:#ff5c7a;
+      --warn:#ffd166;
+      --border:rgba(255,255,255,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(106,169,255,.18), transparent 55%),
+                  radial-gradient(900px 700px at 90% 30%, rgba(55,214,122,.14), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{width:min(920px, 100%)}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:22px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+    .top{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.35;
+    }
+    .stats{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .pill{
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:13px;
+      color:var(--text);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+    .pill b{font-variant-numeric: tabular-nums;}
+    .timer b{color:var(--accent)}
+    .lives b{color:var(--warn)}
+    .score b{color:var(--good)}
+    .divider{
+      height:1px;
+      background:var(--border);
+      margin:14px 0;
+    }
+    .screen{display:none}
+    .screen.active{display:block}
+
+    .center{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:18px 8px 6px;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:rgba(106,169,255,.18);
+      color:var(--text);
+      padding:12px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      transition:transform .05s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+    .btn:hover{background:rgba(106,169,255,.26); border-color:rgba(106,169,255,.35)}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{
+      background:rgba(255,255,255,.06);
+    }
+    .btn.secondary:hover{
+      background:rgba(255,255,255,.10);
+      border-color:rgba(255,255,255,.18);
+    }
+
+    .questionBox{
+      margin-top:6px;
+      padding:16px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .prompt{
+      color:var(--muted);
+      font-size:14px;
+      margin:0;
+    }
+    .expr{
+      font-size:28px;
+      letter-spacing:.2px;
+      font-weight:800;
+      margin:0;
+      font-variant-numeric: tabular-nums;
+    }
+    .options{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 720px){
+      .options{grid-template-columns:1fr}
+      .expr{font-size:24px}
+    }
+    .opt{
+      text-align:left;
+      width:100%;
+      border:1px solid rgba(255,255,255,.25);
+      background:rgba(255,255,255,.14);
+      padding:18px 16px;
+      border-radius:14px;
+      cursor:pointer;
+      transition:transform .05s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+      font-weight:800;
+      font-size:22px;
+      color:#ffffff;
+      letter-spacing:0.5px;
+    }
+    .opt:hover{background:rgba(255,255,255,.22); border-color:rgba(255,255,255,.4);box-shadow:0 0 10px rgba(255,255,255,.2)}
+    .opt:active{transform:translateY(1px)}
+    .opt[disabled]{opacity:.65; cursor:not-allowed}
+
+    .feedback{
+      min-height:22px;
+      margin-top:10px;
+      font-weight:700;
+      font-size:14px;
+    }
+    .feedback.good{color:var(--good)}
+    .feedback.bad{color:var(--bad)}
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.12);
+      font-size:14px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--border);
+      vertical-align:top;
+    }
+    th{
+      text-align:left;
+      color:var(--muted);
+      font-weight:700;
+      background:rgba(255,255,255,.04);
+    }
+    tr:last-child td{border-bottom:none}
+    .tag{
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+    }
+    .tag.good{color:var(--good); border-color:rgba(55,214,122,.35); background:rgba(55,214,122,.10)}
+    .tag.bad{color:var(--bad); border-color:rgba(255,92,122,.35); background:rgba(255,92,122,.10)}
+    .mono{font-variant-numeric: tabular-nums}
+    .note{color:var(--muted); font-size:13px; margin:0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="title">
+          <h1>Expand Brackets — Distributive Rule</h1>
+          <p class="sub">Choose the correct expansion. Game ends after <b>3 incorrect</b> answers or when the <b>30s</b> timer runs out.</p>
+        </div>
+        <div class="stats" aria-live="polite">
+          <div class="pill timer">Time: <b id="timeLeft">30</b>s</div>
+          <div class="pill score">Correct: <b id="correctCount">0</b></div>
+          <div class="pill lives">Incorrect: <b id="wrongCount">0</b>/3</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- START SCREEN -->
+      <section class="screen active" id="startScreen">
+        <div class="center">
+          <p class="sub" style="max-width:60ch;">
+            You’ll see an expression like <b>3(2x − 5)</b>. Pick the correct expansion from 4 options.
+            Wrong options include common mistakes (missing a distribution, sign errors, etc.).
+          </p>
+          <button class="btn" id="startBtn">Start</button>
+          <p class="note">Tip: Distribute the outside term to <b>both</b> terms inside the brackets.</p>
+        </div>
+      </section>
+
+      <!-- GAME SCREEN -->
+      <section class="screen" id="gameScreen">
+        <div class="questionBox">
+          <p class="prompt">Expand:</p>
+          <p class="expr mono" id="questionText">—</p>
+
+          <div class="options" id="options"></div>
+
+          <div class="feedback" id="feedback" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- END SCREEN -->
+      <section class="screen" id="endScreen">
+        <div class="center" style="align-items:stretch; text-align:left;">
+          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;">
+            <div>
+              <h2 style="margin:0 0 4px; font-size:18px;">Game Over</h2>
+              <p class="sub" id="endReason" style="margin:0;">—</p>
+            </div>
+            <div class="pill score" style="font-size:14px;">Final Correct: <b id="finalCorrect">0</b></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div>
+            <h3 style="margin:0 0 10px; font-size:15px; color:var(--muted);">Review</h3>
+            <div style="overflow:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:26%;">Question</th>
+                    <th style="width:27%;">Your Answer</th>
+                    <th style="width:27%;">Correct Answer</th>
+                    <th style="width:20%;">Result</th>
+                  </tr>
+                </thead>
+                <tbody id="reviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap;">
+            <button class="btn secondary" id="newGameBtn">Start New Game</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ---------- Utilities ----------
+  const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const choice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const shuffle = (arr) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  // Format coefficient for variable term (e.g., 1x -> x, -1x -> -x)
+  function formatVarTerm(coeff, variable = "x") {
+    if (coeff === 0) return "0";
+    if (coeff === 1) return variable;
+    if (coeff === -1) return "-" + variable;
+    return `${coeff}${variable}`;
+  }
+
+  // Format constant with sign for inside brackets (e.g., + 5, - 7)
+  function formatSignedConst(n) {
+    const sign = n < 0 ? "−" : "+";
+    return `${sign} ${Math.abs(n)}`;
+  }
+
+  // Format linear expression A x + B (with nice signs and simplifications)
+  function formatLinear(A, B, variable = "x") {
+    // Ensure not both zero (shouldn't happen with our generation)
+    const parts = [];
+    if (A !== 0) parts.push(formatVarTerm(A, variable));
+
+    if (B !== 0) {
+      const absB = Math.abs(B);
+      if (parts.length === 0) {
+        parts.push(B.toString()); // just constant
+      } else {
+        parts.push((B < 0 ? " − " : " + ") + absB);
+      }
+    }
+
+    if (parts.length === 0) return "0";
+    return parts.join("");
+  }
+
+  // Format question k(ax + b) with parentheses and sign
+  function formatQuestion(k, a, b, variable = "x") {
+    const outside = k.toString();
+    const insideAx = formatVarTerm(a, variable);
+    const insideB = formatSignedConst(b);
+    return `${outside}(${insideAx} ${insideB})`;
+  }
+
+  // ---------- Game State ----------
+  const state = {
+    running: false,
+    timeLeft: 30,
+    timerId: null,
+    correct: 0,
+    wrong: 0,
+    current: null, // {k,a,b, questionStr, correctStr, options[], correctIndex}
+    history: [] // {questionStr, chosenStr, correctStr, isCorrect}
+  };
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+
+  const startScreen = $("startScreen");
+  const gameScreen  = $("gameScreen");
+  const endScreen   = $("endScreen");
+
+  const timeLeftEl = $("timeLeft");
+  const correctEl  = $("correctCount");
+  const wrongEl    = $("wrongCount");
+
+  const questionText = $("questionText");
+  const optionsWrap  = $("options");
+  const feedbackEl   = $("feedback");
+
+  const endReasonEl  = $("endReason");
+  const finalCorrectEl = $("finalCorrect");
+  const reviewBody   = $("reviewBody");
+
+  $("startBtn").addEventListener("click", startGame);
+  $("newGameBtn").addEventListener("click", startGame);
+
+  function showScreen(which) {
+    startScreen.classList.remove("active");
+    gameScreen.classList.remove("active");
+    endScreen.classList.remove("active");
+    which.classList.add("active");
+  }
+
+  function resetUIStats() {
+    timeLeftEl.textContent = state.timeLeft;
+    correctEl.textContent = state.correct;
+    wrongEl.textContent = state.wrong;
+  }
+
+  // ---------- Problem Generation ----------
+  function generateProblem() {
+    // Choose coefficients avoiding zeros and keeping difficulty reasonable
+    const kChoices = [-9,-8,-7,-6,-5,-4,-3,-2,-1, 2,3,4,5,6,7,8,9];
+    const aChoices = [-9,-8,-7,-6,-5,-4,-3,-2,-1, 2,3,4,5,6,7,8,9];
+    const bChoices = [-9,-8,-7,-6,-5,-4,-3,-2,-1, 1,2,3,4,5,6,7,8,9];
+
+    const k = choice(kChoices);
+    const a = choice(aChoices);
+    const b = choice(bChoices);
+
+    const A = k * a;
+    const B = k * b;
+
+    const questionStr = formatQuestion(k, a, b, "x");
+    const correctStr = formatLinear(A, B, "x");
+
+    // Build wrong answers based on common errors
+    const wrongSet = new Set();
+
+    // Error 1: distribute to first term only (leave constant unchanged)
+    // k(ax + b) -> (k*a)x + b
+    wrongSet.add(formatLinear(k * a, b, "x"));
+
+    // Error 2: distribute to constant only (leave ax unchanged)
+    // -> ax + k*b
+    wrongSet.add(formatLinear(a, k * b, "x"));
+
+    // Error 3: sign error on the constant part (common with negatives)
+    // -> (k*a)x - (k*b)
+    // (but if B=0, we avoid; B can't be 0 with our generation)
+    wrongSet.add(formatLinear(k * a, -k * b, "x"));
+
+    // If any wrongs accidentally match the correct answer (rare but possible), replace with alternates
+    function addAlternateWrongs() {
+      // Alternate A: forget to multiply a and b by k, but still "expand" visually
+      // -> ax + b
+      wrongSet.add(formatLinear(a, b, "x"));
+
+      // Alternate B: multiply variable coefficient incorrectly by adding instead of multiplying
+      // -> (k+a)x + (k*b)
+      wrongSet.add(formatLinear(k + a, k * b, "x"));
+
+      // Alternate C: multiply both but swap signs (another sign mishap)
+      // -> -(k*a)x + (k*b)
+      wrongSet.add(formatLinear(-(k * a), k * b, "x"));
+    }
+
+    addAlternateWrongs();
+
+    // Ensure we have 3 unique wrong answers that are not the correct answer
+    const wrongs = [];
+    for (const w of wrongSet) {
+      if (w !== correctStr) wrongs.push(w);
+      if (wrongs.length === 3) break;
+    }
+
+    // In extremely unlikely case we still don't have 3, brute-generate more
+    let guard = 0;
+    while (wrongs.length < 3 && guard < 50) {
+      guard++;
+      const tweakA = (Math.random() < 0.5 ? 1 : -1) * randInt(1, 4);
+      const tweakB = (Math.random() < 0.5 ? 1 : -1) * randInt(1, 6);
+      const candidate = formatLinear(A + tweakA, B + tweakB, "x");
+      if (candidate !== correctStr && !wrongs.includes(candidate)) wrongs.push(candidate);
+    }
+
+    const options = shuffle([correctStr, ...wrongs]);
+    const correctIndex = options.indexOf(correctStr);
+
+    return { k, a, b, questionStr, correctStr, options, correctIndex };
+  }
+
+  // ---------- Rendering ----------
+  function renderProblem() {
+    feedbackEl.textContent = "";
+    feedbackEl.className = "feedback";
+
+    state.current = generateProblem();
+
+    questionText.textContent = state.current.questionStr;
+    optionsWrap.innerHTML = "";
+
+    state.current.options.forEach((optText, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "opt mono";
+      btn.type = "button";
+      btn.textContent = optText;
+      btn.addEventListener("click", () => handleAnswer(idx));
+      optionsWrap.appendChild(btn);
+    });
+  }
+
+  function setOptionsDisabled(disabled) {
+    [...optionsWrap.querySelectorAll("button")].forEach(b => b.disabled = disabled);
+  }
+
+  // ---------- Game Flow ----------
+  function startGame() {
+    stopTimer();
+
+    state.running = true;
+    state.timeLeft = 30;
+    state.correct = 0;
+    state.wrong = 0;
+    state.history = [];
+    state.current = null;
+
+    resetUIStats();
+    showScreen(gameScreen);
+
+    startTimer();
+    renderProblem();
+  }
+
+  function startTimer() {
+    timeLeftEl.textContent = state.timeLeft;
+
+    state.timerId = setInterval(() => {
+      if (!state.running) return;
+
+      state.timeLeft -= 1;
+      timeLeftEl.textContent = state.timeLeft;
+
+      if (state.timeLeft <= 0) {
+        endGame("Time's up (30 seconds expired).");
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerId) {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+  }
+
+  function handleAnswer(chosenIndex) {
+    if (!state.running) return;
+
+    setOptionsDisabled(true);
+
+    const chosenStr = state.current.options[chosenIndex];
+    const correctStr = state.current.correctStr;
+    const isCorrect = (chosenIndex === state.current.correctIndex);
+
+    state.history.push({
+      questionStr: state.current.questionStr,
+      chosenStr,
+      correctStr,
+      isCorrect
+    });
+
+    if (isCorrect) {
+      state.correct += 1;
+      correctEl.textContent = state.correct;
+      feedbackEl.textContent = "Correct!";
+      feedbackEl.className = "feedback good";
+    } else {
+      state.wrong += 1;
+      wrongEl.textContent = state.wrong;
+      feedbackEl.textContent = "Incorrect.";
+      feedbackEl.className = "feedback bad";
+    }
+
+    // End conditions
+    if (!isCorrect && state.wrong >= 3) {
+      setTimeout(() => endGame("3 incorrect answers reached."), 450);
+      return;
+    }
+
+    // Next question after a short pause
+    setTimeout(() => {
+      if (!state.running) return;
+      renderProblem();
+    }, 450);
+  }
+
+  function endGame(reason) {
+    if (!state.running) return;
+
+    state.running = false;
+    stopTimer();
+    setOptionsDisabled(true);
+
+    // Populate end screen
+    endReasonEl.textContent = reason;
+    finalCorrectEl.textContent = state.correct;
+
+    // Build review table
+    reviewBody.innerHTML = "";
+    if (state.history.length === 0) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td colspan="4" style="color: var(--muted);">No questions attempted.</td>
+      `;
+      reviewBody.appendChild(tr);
+    } else {
+      state.history.forEach((h) => {
+        const tr = document.createElement("tr");
+        const tag = h.isCorrect
+          ? `<span class="tag good">Correct</span>`
+          : `<span class="tag bad">Incorrect</span>`;
+
+        // If correct, show correct = chosen (still fine). If incorrect, show correct answer explicitly.
+        tr.innerHTML = `
+          <td class="mono">${escapeHtml(h.questionStr)}</td>
+          <td class="mono">${escapeHtml(h.chosenStr)}</td>
+          <td class="mono">${escapeHtml(h.correctStr)}</td>
+          <td>${tag}</td>
+        `;
+        reviewBody.appendChild(tr);
+      });
+    }
+
+    showScreen(endScreen);
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  // Initialize stats on load
+  resetUIStats();
+})();
+</script>
+</body>
+</html>
