@@ -156,12 +156,12 @@
       const den2Container = document.getElementById("den2Container");
 
       if (hideNumerator) {
-        num2Container.innerHTML = `<input type="number" id="answerBox" autofocus />`;
+        num2Container.innerHTML = `<input type="number" id="answerBox" min="1" required autofocus />`;
         den2Container.textContent = den2;
         currentAnswer = num2;
       } else {
         num2Container.textContent = num2;
-        den2Container.innerHTML = `<input type="number" id="answerBox" autofocus />`;
+        den2Container.innerHTML = `<input type="number" id="answerBox" min="1" required autofocus />`;
         currentAnswer = den2;
       }
 
@@ -170,7 +170,24 @@
 
       inputBox.addEventListener("keydown", function(event) {
         if (event.key === "Enter") {
-          checkAnswer(parseInt(inputBox.value));
+          const value = inputBox.value.trim();
+
+          // Prevent empty submission
+          if (value === "") {
+            inputBox.style.border = "2px solid red";
+            return;
+          }
+
+          const parsedValue = parseInt(value);
+
+          // Prevent invalid numbers
+          if (isNaN(parsedValue)) {
+            inputBox.style.border = "2px solid red";
+            return;
+          }
+
+          inputBox.style.border = "2px solid #888";
+          checkAnswer(parsedValue);
         }
       });
     }
