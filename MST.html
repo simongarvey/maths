@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MST Practice (Minimum Spanning Tree)</title>
+  <style>
+    :root { --bg:#0b1020; --panel:#121a33; --text:#e7ecff; --muted:#a9b3d6; --good:#2dd4bf; --bad:#fb7185; --hint:#60a5fa; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:1100px; margin:0 auto; padding:20px; display:grid; grid-template-columns: 1fr 360px; gap:16px; }
+    @media (max-width: 960px){ .wrap{ grid-template-columns:1fr; } }
+    .card { background:var(--panel); border:1px solid rgba(255,255,255,0.08); border-radius:16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .graphCard { padding:10px; }
+    .side { padding:16px; }
+    h1 { font-size:18px; margin:0 0 8px 0; }
+    p { margin:8px 0; color:var(--muted); line-height:1.35; font-size:14px; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+    input[type="text"]{
+      width:140px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06); color:var(--text); outline:none;
+    }
+    button{
+      padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.10); color:var(--text); cursor:pointer;
+    }
+    button:hover{ background: rgba(255,255,255,0.16); }
+    .pill { display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.12); color:var(--muted); font-size:12px; }
+    .ok { color: var(--good); border-color: rgba(45,212,191,0.35); }
+    .no { color: var(--bad); border-color: rgba(251,113,133,0.35); }
+    .info { color: var(--hint); border-color: rgba(96,165,250,0.35); }
+    .divider { height:1px; background: rgba(255,255,255,0.08); margin:14px 0; }
+    .small { font-size:12px; }
+    svg { width:100%; height:640px; display:block; border-radius:14px; background: rgba(255,255,255,0.03); user-select:none; touch-action:none; }
+    .legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .legend span { display:inline-flex; gap:6px; align-items:center; font-size:12px; color:var(--muted); }
+    .swatch { width:14px; height:14px; border-radius:4px; display:inline-block; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card graphCard">
+      <svg id="svg" viewBox="0 0 900 640" aria-label="Graph canvas"></svg>
+      <div class="legend" style="padding:10px 10px 12px 10px;">
+        <span><i class="swatch" style="background:#94a3b8;"></i>unselected edge</span>
+        <span><i class="swatch" style="background:#fbbf24;"></i>your selection</span>
+        <span><i class="swatch" style="background:#22c55e;"></i>correct MST</span>
+        <span><i class="swatch" style="background:#e7ecff;"></i>drag vertices</span>
+      </div>
+    </div>
+
+    <div class="card side">
+      <h1>Minimum Spanning Tree Practice</h1>
+      <p>
+        Click edges to toggle them. Drag vertices to reposition. Enter the <b>MST total weight</b> and click <b>Check</b>.
+      </p>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <span class="pill info" id="graphStats">—</span>
+        <span class="pill" id="selectionStats">Selected: 0</span>
+      </div>
+
+      <div class="row">
+        <label for="answer" class="small" style="color:var(--muted);">MST total weight:</label>
+        <input id="answer" type="text" inputmode="numeric" placeholder="e.g. 17"/>
+        <button id="checkBtn">Check</button>
+        <button id="resetBtn">Try another</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="feedback" class="pill" style="display:none;"></div>
+
+    </div>
+  </div>
+
+<script>
+(() => {
+  const randInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+
+  class DSU {
+    constructor(n){
+      this.p = Array.from({length:n}, (_,i)=>i);
+      this.r = Array(n).fill(0);
+      this.count = n;
+    }
+    find(x){
+      while (this.p[x] !== x) { this.p[x] = this.p[this.p[x]]; x = this.p[x]; }
+      return x;
+    }
+    union(a,b){
+      a = this.find(a); b = this.find(b);
+      if (a === b) return false;
+      if (this.r[a] < this.r[b]) [a,b] = [b,a];
+      this.p[b] = a;
+      if (this.r[a] === this.r[b]) this.r[a]++;
+      this.count--;
+      return true;
+    }
+  }
+
+  const svg = document.getElementById("svg");
+  const answerEl = document.getElementById("answer");
+  const checkBtn = document.getElementById("checkBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const feedback = document.getElementById("feedback");
+  const graphStats = document.getElementById("graphStats");
+  const selectionStats = document.getElementById("selectionStats");
+
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  let state = null;
+
+  // Drag state
+  let drag = { active:false, nodeId:null, offsetX:0, offsetY:0 };
+
+  function setFeedback(type, text) {
+    feedback.style.display = "inline-flex";
+    feedback.className = "pill " + (type === "ok" ? "ok" : type === "no" ? "no" : "info");
+    feedback.textContent = text;
+  }
+  function clearFeedback(){
+    feedback.style.display = "none";
+    feedback.textContent = "";
+    feedback.className = "pill";
+  }
+
+  function key(u,v){ return (u < v ? `${u}-${v}` : `${v}-${u}`); }
+
+  // Segment intersection helpers (for generation only)
+  function segmentIntersect(a,b,c,d){
+    function orient(p,q,r){
+      return (q.x - p.x)*(r.y - p.y) - (q.y - p.y)*(r.x - p.x);
+    }
+    function onSegment(p,q,r){
+      return Math.min(p.x,r.x) <= q.x && q.x <= Math.max(p.x,r.x) &&
+             Math.min(p.y,r.y) <= q.y && q.y <= Math.max(p.y,r.y);
+    }
+    const o1 = orient(a,b,c);
+    const o2 = orient(a,b,d);
+    const o3 = orient(c,d,a);
+    const o4 = orient(c,d,b);
+
+    if ((o1 > 0 && o2 < 0 || o1 < 0 && o2 > 0) &&
+        (o3 > 0 && o4 < 0 || o3 < 0 && o4 > 0)) return true;
+
+    if (o1 === 0 && onSegment(a,c,b)) return true;
+    if (o2 === 0 && onSegment(a,d,b)) return true;
+    if (o3 === 0 && onSegment(c,a,d)) return true;
+    if (o4 === 0 && onSegment(c,b,d)) return true;
+
+    return false;
+  }
+  function edgesCross(nodes, e1, e2){
+    if (e1.u === e2.u || e1.u === e2.v || e1.v === e2.u || e1.v === e2.v) return false;
+    const a = nodes[e1.u], b = nodes[e1.v], c = nodes[e2.u], d = nodes[e2.v];
+    return segmentIntersect(a,b,c,d);
+  }
+  function hasAnyCrossing(nodes, edges){
+    for (let i=0;i<edges.length;i++){
+      for (let j=i+1;j<edges.length;j++){
+        if (edgesCross(nodes, edges[i], edges[j])) return true;
+      }
+    }
+    return false;
+  }
+
+  function kruskalMST(n, edges) {
+    const sorted = [...edges].sort((a,b) => a.w - b.w || (a.id < b.id ? -1 : 1));
+    const dsu = new DSU(n);
+    const mst = [];
+    let total = 0;
+    for (const e of sorted) {
+      if (dsu.union(e.u, e.v)) {
+        mst.push(e);
+        total += e.w;
+        if (mst.length === n - 1) break;
+      }
+    }
+    return { mst, total };
+  }
+
+  function isSpanningTree(n, selectedEdges) {
+    if (selectedEdges.length !== n - 1) return { ok:false, reason:`Needs exactly ${n-1} edges.` };
+    const dsu = new DSU(n);
+    for (const e of selectedEdges) {
+      if (!dsu.union(e.u, e.v)) return { ok:false, reason:`Cycle detected.` };
+    }
+    if (dsu.count !== 1) return { ok:false, reason:`Not connected.` };
+    return { ok:true, reason:`Looks like a spanning tree.` };
+  }
+
+  // Planar-ish generation without crossings (initially)
+  function generateGraphNoCrossings() {
+    const MIN_EDGES = 8;
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const n = randInt(6, 12);
+
+      const nodes = [];
+      const minDist = 70;
+      let tries = 0;
+      while (nodes.length < n && tries < 5000) {
+        tries++;
+        const cand = { id: nodes.length, x: randInt(80, 820), y: randInt(80, 560) };
+        let ok = true;
+        for (const p of nodes) {
+          const dx = cand.x - p.x, dy = cand.y - p.y;
+          if (Math.sqrt(dx*dx + dy*dy) < minDist) { ok = false; break; }
+        }
+        if (ok) nodes.push(cand);
+      }
+      if (nodes.length < n) continue;
+
+      const edges = [];
+      const used = new Set();
+
+      const neighborOrder = Array.from({length:n}, (_,i) => {
+        const arr = [];
+        for (let j=0;j<n;j++){
+          if (i===j) continue;
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          arr.push({ j, d: Math.sqrt(dx*dx + dy*dy) });
+        }
+        arr.sort((a,b)=>a.d-b.d);
+        return arr.map(x=>x.j);
+      });
+
+      const built = new Set([0]);
+      let okTree = true;
+
+      for (let v = 1; v < n; v++) {
+        const candidates = neighborOrder[v].filter(u => built.has(u)).slice(0, 6);
+        const fallback = Array.from(built);
+        const tryParents = candidates.length ? candidates : fallback;
+
+        let added = false;
+        for (const u of tryParents) {
+          const id = key(u,v);
+          if (used.has(id)) continue;
+          const e = { id, u, v, w: randInt(1, 20) };
+
+          let crosses = false;
+          for (const ex of edges) {
+            if (edgesCross(nodes, e, ex)) { crosses = true; break; }
+          }
+          if (crosses) continue;
+
+          edges.push(e);
+          used.add(id);
+          built.add(v);
+          added = true;
+          break;
+        }
+
+        if (!added) { okTree = false; break; }
+      }
+      if (!okTree || edges.length !== n - 1) continue;
+
+      const targetEdges = Math.max(MIN_EDGES, (n - 1) + randInt(1, Math.max(2, Math.floor(n/2))));
+      let extraAttempts = 0;
+
+      while (edges.length < targetEdges && extraAttempts < 12000) {
+        extraAttempts++;
+        const u = randInt(0, n - 1);
+        let v = randInt(0, n - 1);
+        if (u === v) continue;
+
+        const id = key(u,v);
+        if (used.has(id)) continue;
+
+        const e = { id, u, v, w: randInt(1, 20) };
+
+        let crosses = false;
+        for (const ex of edges) {
+          if (edgesCross(nodes, e, ex)) { crosses = true; break; }
+        }
+        if (crosses) continue;
+
+        edges.push(e);
+        used.add(id);
+      }
+
+      if (edges.length < MIN_EDGES) continue;
+      if (hasAnyCrossing(nodes, edges)) continue;
+
+      return { nodes, edges };
+    }
+    throw new Error("Failed to generate a non-crossing graph. Try reloading.");
+  }
+
+  function edgeLabelPos(n1, n2){
+    const mx = (n1.x + n2.x)/2;
+    const my = (n1.y + n2.y)/2;
+    const dx = n2.x - n1.x;
+    const dy = n2.y - n1.y;
+    const len = Math.max(1, Math.sqrt(dx*dx + dy*dy));
+    const ox = -dy / len * 12;
+    const oy = dx / len * 12;
+    return { x: mx + ox, y: my + oy };
+  }
+
+  function svgPointFromEvent(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+    const m = svg.getScreenCTM();
+    if (!m) return {x:0,y:0};
+    const p = pt.matrixTransform(m.inverse());
+    return { x: p.x, y: p.y };
+  }
+
+  function clampNode(node){
+    // Keep inside viewBox with padding for node radius
+    const pad = 28;
+    node.x = Math.max(pad, Math.min(900 - pad, node.x));
+    node.y = Math.max(pad, Math.min(640 - pad, node.y));
+  }
+
+  function render() {
+    svg.innerHTML = "";
+    const { nodes, edges, selected, mstSet, showMST } = state;
+
+    const bg = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    bg.setAttribute("x","0"); bg.setAttribute("y","0");
+    bg.setAttribute("width","900"); bg.setAttribute("height","640");
+    bg.setAttribute("rx","14");
+    bg.setAttribute("fill","rgba(255,255,255,0.02)");
+    svg.appendChild(bg);
+
+    // Edges
+    for (const e of edges) {
+      const n1 = nodes[e.u], n2 = nodes[e.v];
+
+      const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+      g.setAttribute("data-edge", e.id);
+      g.style.cursor = state.locked ? "default" : "pointer";
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+      line.setAttribute("x1", n1.x); line.setAttribute("y1", n1.y);
+      line.setAttribute("x2", n2.x); line.setAttribute("y2", n2.y);
+
+      const inUserSel = selected.has(e.id);
+      const inMST = mstSet.has(e.id);
+
+      let stroke = "#94a3b8";
+      let sw = 3;
+      let opacity = 0.85;
+
+      if (inUserSel) { stroke = "#fbbf24"; sw = 6; opacity = 0.95; }
+      if (showMST && inMST) { stroke = "#22c55e"; sw = 7; opacity = 0.98; }
+
+      line.setAttribute("stroke", stroke);
+      line.setAttribute("stroke-width", sw);
+      line.setAttribute("stroke-linecap", "round");
+      line.setAttribute("opacity", opacity);
+
+      const hit = document.createElementNS("http://www.w3.org/2000/svg","line");
+      hit.setAttribute("x1", n1.x); hit.setAttribute("y1", n1.y);
+      hit.setAttribute("x2", n2.x); hit.setAttribute("y2", n2.y);
+      hit.setAttribute("stroke", "transparent");
+      hit.setAttribute("stroke-width", 18);
+      hit.setAttribute("stroke-linecap", "round");
+
+      const lp = edgeLabelPos(n1, n2);
+      const labelBg = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      const label = document.createElementNS("http://www.w3.org/2000/svg","text");
+      label.textContent = e.w;
+      label.setAttribute("x", lp.x);
+      label.setAttribute("y", lp.y);
+      label.setAttribute("fill", "rgba(231,236,255,0.95)");
+      label.setAttribute("font-size", "14");
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("dominant-baseline", "middle");
+
+      labelBg.setAttribute("x", lp.x - 12);
+      labelBg.setAttribute("y", lp.y - 10);
+      labelBg.setAttribute("width", 24);
+      labelBg.setAttribute("height", 20);
+      labelBg.setAttribute("rx", 6);
+      labelBg.setAttribute("fill", "rgba(0,0,0,0.45)");
+      labelBg.setAttribute("stroke", "rgba(255,255,255,0.12)");
+
+      g.appendChild(line);
+      g.appendChild(hit);
+      g.appendChild(labelBg);
+      g.appendChild(label);
+
+      // Edge click (ignore clicks during drag)
+      g.addEventListener("click", () => {
+        if (state.locked) return;
+        if (drag.active) return;
+        if (state.selected.has(e.id)) state.selected.delete(e.id);
+        else state.selected.add(e.id);
+        selectionStats.textContent = `Selected: ${state.selected.size}`;
+        clearFeedback();
+        render();
+      });
+
+      svg.appendChild(g);
+    }
+
+    // Nodes
+    for (const node of nodes) {
+      const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+      g.setAttribute("data-node", String(node.id));
+      g.style.cursor = state.locked ? "default" : "grab";
+
+      const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      c.setAttribute("cx", node.x);
+      c.setAttribute("cy", node.y);
+      c.setAttribute("r", 22);
+      c.setAttribute("fill", "rgba(255,255,255,0.06)");
+      c.setAttribute("stroke", "rgba(255,255,255,0.25)");
+      c.setAttribute("stroke-width", "2");
+
+      const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+      t.textContent = LETTERS[node.id]; // A..L
+      t.setAttribute("x", node.x);
+      t.setAttribute("y", node.y);
+      t.setAttribute("fill", "rgba(231,236,255,0.98)");
+      t.setAttribute("font-size", "16");
+      t.setAttribute("font-weight", "800");
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("dominant-baseline", "middle");
+      t.style.pointerEvents = "none"; // so dragging works when grabbing label
+
+      g.appendChild(c);
+      g.appendChild(t);
+
+      // Drag start
+      g.addEventListener("pointerdown", (evt) => {
+        if (state.locked) return;
+        evt.preventDefault();
+        g.setPointerCapture(evt.pointerId);
+
+        const p = svgPointFromEvent(evt);
+        drag.active = true;
+        drag.nodeId = node.id;
+        drag.offsetX = node.x - p.x;
+        drag.offsetY = node.y - p.y;
+        g.style.cursor = "grabbing";
+      });
+
+      // Drag move
+      g.addEventListener("pointermove", (evt) => {
+        if (!drag.active) return;
+        if (drag.nodeId !== node.id) return;
+
+        const p = svgPointFromEvent(evt);
+        node.x = p.x + drag.offsetX;
+        node.y = p.y + drag.offsetY;
+        clampNode(node);
+
+        // Re-render to move connected edges/labels
+        render();
+      });
+
+      // Drag end/cancel
+      const endDrag = (evt) => {
+        if (!drag.active) return;
+        if (drag.nodeId !== node.id) return;
+        drag.active = false;
+        drag.nodeId = null;
+        g.style.cursor = "grab";
+        try { g.releasePointerCapture(evt.pointerId); } catch {}
+      };
+      g.addEventListener("pointerup", endDrag);
+      g.addEventListener("pointercancel", endDrag);
+
+      svg.appendChild(g);
+    }
+  }
+
+  function newProblem() {
+    const { nodes, edges } = generateGraphNoCrossings();
+    const { mst, total } = kruskalMST(nodes.length, edges);
+    const mstSet = new Set(mst.map(e => e.id));
+
+    state = {
+      nodes,
+      edges,
+      mst,
+      mstTotal: total,
+      mstSet,
+      selected: new Set(),
+      showMST: false,
+      locked: false
+    };
+
+    drag.active = false;
+    drag.nodeId = null;
+
+    graphStats.textContent = `${nodes.length} vertices • ${edges.length} edges`;
+    selectionStats.textContent = `Selected: 0`;
+    answerEl.value = "";
+    clearFeedback();
+    render();
+  }
+
+  function normalizeNumber(str){
+    const s = (str ?? "").trim().replace(/\s+/g,"");
+    if (!s) return null;
+    if (!/^\d+(\.\d+)?$/.test(s)) return NaN;
+    return Number(s);
+  }
+
+  checkBtn.addEventListener("click", () => {
+    clearFeedback();
+
+    const n = state.nodes.length;
+    const selectedEdges = state.edges.filter(e => state.selected.has(e.id));
+    const treeCheck = isSpanningTree(n, selectedEdges);
+
+    const entered = normalizeNumber(answerEl.value);
+    const userSelectedTotal = selectedEdges.reduce((acc,e)=>acc+e.w,0);
+
+    if (Number.isNaN(entered)) {
+      setFeedback("no", "Please enter a valid number for the total weight.");
+      return;
+    }
+    if (entered === null) {
+      setFeedback("no", "Enter your MST total weight first.");
+      return;
+    }
+
+    const enteredMatchesTrue = Math.abs(entered - state.mstTotal) < 1e-9;
+    const enteredMatchesSelection = Math.abs(entered - userSelectedTotal) < 1e-9;
+
+    if (treeCheck.ok && enteredMatchesTrue && enteredMatchesSelection) {
+      setFeedback("ok", `Correct! MST total weight = ${state.mstTotal}.`);
+      state.locked = true;
+      return;
+    }
+
+    state.showMST = true;
+    state.locked = true;
+    render();
+
+    let msg = `Incorrect. Correct MST total weight = ${state.mstTotal}. `;
+    if (!treeCheck.ok) msg += `Your edges: ${treeCheck.reason} `;
+    else if (!enteredMatchesSelection) msg += `Your entered total (${entered}) doesn't match your selected edges total (${userSelectedTotal}). `;
+    else msg += `Your total (${entered}) is not minimal. `;
+
+    setFeedback("no", msg.trim());
+  });
+
+  resetBtn.addEventListener("click", () => newProblem());
+
+  newProblem();
+})();
+</script>
+</body>
+</html>
