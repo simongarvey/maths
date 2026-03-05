@@ -545,7 +545,7 @@
     }
   }
 
-  function timeKey(h, m) {
+    function timeKey(h, m) {
     return `${h}:${String(m).padStart(2,'0')}`;
   }
 
@@ -554,17 +554,20 @@
 
     const tryMake = () => {
       let t;
-      if (state.round <= 2 && lvl.sample.length) {
-        t = lvl.sample[(state.round - 1) % lvl.sample.length];
+      // Always random: early rounds pick randomly from the sample set (if provided),
+      // otherwise fall back to the level's generator.
+      if (lvl.sample && lvl.sample.length && state.round <= 2) {
+        t = lvl.sample[randInt(0, lvl.sample.length - 1)];
       } else {
         t = lvl.generator();
       }
-      const h = ((t.h - 1 + 12) % 12) + 1;
+
+      const h = ((t.h - 1 + 12) % 12) + 1; // ensure 1..12
       return { h, m: t.m };
     };
 
-    // No duplicates within a game
-    for (let i = 0; i < 500; i++) {
+    // Never repeat the same time within a game
+    for (let i = 0; i < 800; i++) {
       const candidate = tryMake();
       const key = timeKey(candidate.h, candidate.m);
       if (!state.seenKeys.has(key)) {
@@ -573,7 +576,7 @@
       }
     }
 
-    // Fallback (extremely unlikely with 12 rounds)
+    // Fallback (should be extremely rare with current settings)
     const fallback = tryMake();
     state.seenKeys.add(timeKey(fallback.h, fallback.m));
     return fallback;
