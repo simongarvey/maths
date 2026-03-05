@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clock Match: Drag the Hands</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a33;
+      --text:#e9ecff;
+      --muted:#aab2e6;
+      --accent:#7cf0c5;
+      --danger:#ff6b7a;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 50% 20%, #17214a 0%, var(--bg) 55%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .app{
+      width:min(1100px, 100%);
+      display:grid;
+      gap:18px;
+      grid-template-columns: 1fr;
+    }
+    .top{
+      background: rgba(18,26,51,.9);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      padding:14px 16px;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .title h1{font-size:18px;margin:0;letter-spacing:.2px}
+    .title p{margin:0;color:var(--muted);font-size:12.5px}
+
+    .controls{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .pill{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      padding:8px 10px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      color:var(--text);
+    }
+    .pill input[type="checkbox"]{transform: translateY(1px)}
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(124,240,197,.18), rgba(124,240,197,.06));
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.10);
+      font-weight:600;
+    }
+    .btn:active{transform: translateY(1px)}
+
+    .main{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    .stage{
+      position: relative;
+      background: rgba(18,26,51,.86);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:20px;
+      box-shadow: var(--shadow);
+      padding:18px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      justify-items:center;
+    }
+
+    .timeRow{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .digital{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      min-width: 240px;
+    }
+    .digital .label{color:var(--muted);font-size:12px}
+    .digital .value{font-size:32px;font-weight:800;letter-spacing:1px}
+
+    .status{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12.5px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+    }
+    .chip strong{font-weight:800}
+
+    /* Canvas sizing: big clock */
+    canvas{
+      width:min(78vmin, 640px);
+      height:min(78vmin, 640px);
+      max-width:680px;
+      max-height:680px;
+      touch-action:none;
+      user-select:none;
+    }
+
+    .hint{
+      width:100%;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .results{
+      position:absolute;
+      inset: 14px;
+      display:none;
+      padding:18px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,14,28,.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      z-index: 5;
+
+      /* Layout */
+      max-width: 740px;
+      margin: auto;
+    }
+    .results .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .overlayDim{
+      position:absolute;
+      inset:0;
+      background: radial-gradient(800px 600px at 50% 35%, rgba(0,0,0,.18) 0%, rgba(0,0,0,.45) 55%, rgba(0,0,0,.62) 100%);
+      border-radius:20px;
+      display:none;
+      z-index: 4;
+      pointer-events:none;
+    }
+    .stage.locked canvas{ pointer-events:none; }
+    .stage.locked .overlayDim{ display:block; }
+    .stage.locked .results{ display:block; }
+    .results h2{margin:0 0 6px 0;font-size:18px}
+    .results p{margin:0;color:var(--muted)}
+    .results .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .results .row .chip{background: rgba(0,0,0,.18)}
+
+    @media (min-width: 920px){
+      .app{grid-template-columns: 1fr}
+      .main{grid-template-columns: 1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="title">
+        <h1>Clock Match</h1>
+        <p>Drag the minute + hour hands to match the digital time.</p>
+      </div>
+      <div class="controls">
+        <label class="pill"><input id="toggle24" type="checkbox" /> 24-hour times</label>
+        <button class="btn secondary" id="resetBtn">Restart</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="stage">
+        <div class="timeRow">
+          <div class="digital">
+            <div>
+              <div class="label">Match this time</div>
+              <div class="value" id="targetTime">--:--</div>
+            </div>
+          </div>
+
+          <div class="status">
+            <div class="chip">Round: <strong id="round">0</strong>/<span id="totalRounds">12</span></div>
+            <div class="chip">Level: <strong id="level">1</strong>/4</div>
+            <div class="chip">Streak: <strong id="streak">0</strong></div>
+            <div class="chip">Correct: <strong id="correct">0</strong></div>
+            <button class="btn" id="checkBtn">Check</button>
+            <button class="btn secondary" id="skipBtn">Skip</button>
+          </div>
+        </div>
+
+        <canvas id="clock" width="900" height="900" aria-label="Analog clock" role="img"></canvas>
+
+        <div class="hint">
+          <strong>Tip:</strong> Click near the end of a hand to grab it. The minute hand is longer; the hour hand is shorter.
+          You can keep dragging even after you leave the clock (helpful on touch screens).
+        </div>
+
+        <div class="overlayDim" id="overlayDim" aria-hidden="true"></div>
+        <div class="results" id="results" role="dialog" aria-modal="true" aria-label="Game results">
+          <h2 id="ratingTitle">Your rating</h2>
+          <p id="ratingDesc">—</p>
+          <div class="row">
+            <div class="chip">Accuracy: <strong id="acc">0%</strong></div>
+            <div class="chip">Avg time: <strong id="avg">0.0s</strong></div>
+            <div class="chip">Score: <strong id="score">0</strong></div>
+            <div class="chip">Best streak: <strong id="bestStreak">0</strong></div>
+          </div>
+          <div class="actions">
+            <button class="btn" id="restartBtn">Restart Game</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+(() => {
+  /**
+   * Game settings
+   */
+  const SETTINGS = {
+    totalRounds: 12,
+    // Checking tolerances (hidden from UI)
+    tolMinuteDeg: 2,
+    tolHourDeg: 5,
+
+    // Adaptive progression (kept in logic; not shown in UI text)
+    advanceAfterCorrect: 3,
+    dropAfterWrongStreak: 2,
+
+    // Clock drawing
+    facePadding: 70,
+    // Hand lengths are computed dynamically from clock radius (see getGeom()).
+    minuteLen: 0,
+    hourLen: 0,
+    minuteWidth: 14,
+    hourWidth: 18,
+    centerDot: 20,
+    grabRadius: 42,
+  };
+
+  /**
+   * Difficulty levels
+   * 0: on-the-hour
+   * 1: half-hour
+   * 2: quarter-hour
+   * 3: any minute (excluding :00/:15/:30/:45)
+   */
+  const LEVELS = [
+    {
+      name: "On the hour",
+      sample: [
+        { h: 4, m: 0 },
+        { h: 11, m: 0 },
+        { h: 9, m: 0 },
+        { h: 1, m: 0 },
+        { h: 7, m: 0 },
+      ],
+      generator() {
+        const h = randInt(1, 12);
+        return { h, m: 0 };
+      }
+    },
+    {
+      name: "Half past",
+      sample: [
+        { h: 9, m: 30 },
+        { h: 1, m: 30 },
+        { h: 4, m: 30 },
+      ],
+      generator() {
+        const h = randInt(1, 12);
+        return { h, m: 30 };
+      }
+    },
+    {
+      name: "Quarter past/to",
+      sample: [
+        { h: 6, m: 15 },
+        { h: 3, m: 45 },
+        { h: 12, m: 15 },
+        { h: 10, m: 45 },
+      ],
+      generator() {
+        const h = randInt(1, 12);
+        const m = Math.random() < 0.5 ? 15 : 45;
+        return { h, m };
+      }
+    },
+    {
+      name: "Any minute (no :00/:15/:30/:45)",
+      sample: [
+        { h: 3, m: 39 },
+        { h: 11, m: 6 },
+        { h: 8, m: 52 },
+      ],
+      generator() {
+        const h = randInt(1, 12);
+        const banned = new Set([0, 15, 30, 45]);
+        let m = randInt(0, 59);
+        let guard = 0;
+        while (banned.has(m) && guard < 300) {
+          m = randInt(0, 59);
+          guard++;
+        }
+        return { h, m };
+      }
+    }
+  ];
+
+  /**
+   * State
+   */
+  const state = {
+    level: 0,
+    round: 0,
+    correct: 0,
+    streak: 0,
+    bestStreak: 0,
+    wrongStreak: 0,
+    correctThisLevel: 0,
+    use24h: false,
+
+    // prevent duplicates within a single game (keys are h:mm in 12h space)
+    seenKeys: new Set(),
+
+    target: { h: 12, m: 0 },
+
+    // User-controlled angles in degrees, clockwise from 12 o'clock.
+    minuteAngle: 0,
+    hourAngle: 0,
+
+    // Timing
+    roundStartTs: 0,
+    roundTimes: [], // seconds
+
+    // Drag
+    dragging: null, // 'minute' | 'hour' | null
+    pointerId: null,
+  };
+
+  // DOM
+  const el = {
+    toggle24: document.getElementById('toggle24'),
+    targetTime: document.getElementById('targetTime'),
+    round: document.getElementById('round'),
+    totalRounds: document.getElementById('totalRounds'),
+    level: document.getElementById('level'),
+    streak: document.getElementById('streak'),
+    correct: document.getElementById('correct'),
+    checkBtn: document.getElementById('checkBtn'),
+    skipBtn: document.getElementById('skipBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    restartBtn: document.getElementById('restartBtn'),
+    stage: document.querySelector('.stage'),
+    overlayDim: document.getElementById('overlayDim'),
+    results: document.getElementById('results'),
+    ratingTitle: document.getElementById('ratingTitle'),
+    ratingDesc: document.getElementById('ratingDesc'),
+    acc: document.getElementById('acc'),
+    avg: document.getElementById('avg'),
+    score: document.getElementById('score'),
+    bestStreak: document.getElementById('bestStreak'),
+    canvas: document.getElementById('clock'),
+  };
+
+  el.totalRounds.textContent = String(SETTINGS.totalRounds);
+
+  // Canvas setup
+  const ctx = el.canvas.getContext('2d');
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+  function resizeCanvasToCSS() {
+    const rect = el.canvas.getBoundingClientRect();
+    const w = Math.max(420, Math.floor(rect.width));
+    const h = Math.max(420, Math.floor(rect.height));
+    el.canvas.width = Math.floor(w * DPR);
+    el.canvas.height = Math.floor(h * DPR);
+    draw();
+  }
+
+  window.addEventListener('resize', resizeCanvasToCSS);
+
+  /**
+   * Helpers
+   */
+  function randInt(minIncl, maxIncl) {
+    return Math.floor(Math.random() * (maxIncl - minIncl + 1)) + minIncl;
+  }
+
+  function normDeg(d) {
+    d %= 360;
+    if (d < 0) d += 360;
+    return d;
+  }
+
+  function angleDiff(a, b) {
+    const d = Math.abs(normDeg(a) - normDeg(b));
+    return Math.min(d, 360 - d);
+  }
+
+  // Degrees from center to point, clockwise from 12 o'clock
+  function pointToClockDeg(cx, cy, x, y) {
+    const dx = x - cx;
+    const dy = y - cy;
+    const deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    return deg;
+  }
+
+  function formatTime(h12, m, use24h) {
+    if (!use24h) {
+      return `${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+    // Display option only; analog stays the same. Random AM/PM each round.
+    const pm = Math.random() < 0.5;
+    let h24 = h12 % 12;
+    if (pm) h24 += 12;
+    return `${String(h24).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  function targetAnglesForTime(h12, m) {
+    const minuteAngle = m * 6;
+    const hourAngle = (h12 % 12) * 30 + (m * 0.5);
+    return { minuteAngle, hourAngle };
+  }
+
+  function setHandsToTime() {
+    // Start user hands at 12:00 each round (clear + consistent)
+    state.minuteAngle = 0;
+    state.hourAngle = 0;
+    draw();
+  }
+
+  function updateHUD() {
+    el.round.textContent = String(state.round);
+    el.level.textContent = String(state.level + 1);
+    el.streak.textContent = String(state.streak);
+    el.correct.textContent = String(state.correct);
+    el.targetTime.textContent = formatTime(state.target.h, state.target.m, state.use24h);
+  }
+
+  function showResults() {
+    const roundsPlayed = state.roundTimes.length;
+    const accuracy = roundsPlayed ? (state.correct / roundsPlayed) : 0;
+    const avgTime = roundsPlayed ? (state.roundTimes.reduce((a,b)=>a+b,0) / roundsPlayed) : 0;
+
+    const speedBonus = Math.max(0, Math.min(25, (15 - avgTime) * (25/12)));
+    const base = accuracy * 100;
+    const streakBonus = Math.min(15, state.bestStreak * 2);
+    const score = Math.round(base + speedBonus + streakBonus);
+
+    const rating = getRating(score, accuracy, avgTime);
+
+    el.ratingTitle.textContent = rating.title;
+    el.ratingDesc.textContent = rating.desc;
+    el.acc.textContent = `${Math.round(accuracy * 100)}%`;
+    el.avg.textContent = `${avgTime.toFixed(1)}s`;
+    el.score.textContent = String(score);
+    el.bestStreak.textContent = String(state.bestStreak);
+
+    el.stage.classList.add('locked');
+    el.restartBtn.focus?.();
+  }
+
+  function getRating(score, accuracy, avgTime) {
+    if (accuracy === 1 && avgTime < 5) {
+      return { title: "Second to None ⏱️", desc: "Perfect accuracy and snappy speed. You didn’t just tell time — you *owned* it." };
+    }
+    if (score >= 120) return { title: "Clock Star ⭐", desc: "You’re shining bright like a well-polished bezel." };
+    if (score >= 105) return { title: "Time Turner 🔄", desc: "You twist those hands like you’ve got a time machine." };
+    if (score >= 90) return { title: "Minute Master 🥇", desc: "Your minutes are meaningful, and your hands are steady." };
+    if (score >= 75) return { title: "Handy with Hands ✋", desc: "Nice work — you’re getting the hang of it (literally)." };
+    if (score >= 60) return { title: "Tick-Tock Trainee 🎓", desc: "Solid effort. A little more practice and you’ll be right on time." };
+    if (score >= 45) return { title: "Almost O’Clock 🤏", desc: "Close enough to hear the tick… but not quite the tock." };
+    return { title: "Lost in Time (but fun!) 🕰️", desc: "No worries — rewind and try again. Time is on your side." };
+  }
+
+  /**
+   * Level progression logic
+   */
+  function maybeAdjustLevel(wasCorrect) {
+    if (wasCorrect) {
+      state.wrongStreak = 0;
+      state.correctThisLevel += 1;
+      if (state.correctThisLevel >= SETTINGS.advanceAfterCorrect && state.level < LEVELS.length - 1) {
+        state.level += 1;
+        state.correctThisLevel = 0;
+      }
+    } else {
+      state.correctThisLevel = 0;
+      state.wrongStreak += 1;
+      if (state.wrongStreak >= SETTINGS.dropAfterWrongStreak && state.level > 0) {
+        state.level -= 1;
+        state.wrongStreak = 0;
+      }
+    }
+  }
+
+  function timeKey(h, m) {
+    return `${h}:${String(m).padStart(2,'0')}`;
+  }
+
+  function pickTargetTime() {
+    const lvl = LEVELS[state.level];
+
+    const tryMake = () => {
+      let t;
+      if (state.round <= 2 && lvl.sample.length) {
+        t = lvl.sample[(state.round - 1) % lvl.sample.length];
+      } else {
+        t = lvl.generator();
+      }
+      const h = ((t.h - 1 + 12) % 12) + 1;
+      return { h, m: t.m };
+    };
+
+    // No duplicates within a game
+    for (let i = 0; i < 500; i++) {
+      const candidate = tryMake();
+      const key = timeKey(candidate.h, candidate.m);
+      if (!state.seenKeys.has(key)) {
+        state.seenKeys.add(key);
+        return candidate;
+      }
+    }
+
+    // Fallback (extremely unlikely with 12 rounds)
+    const fallback = tryMake();
+    state.seenKeys.add(timeKey(fallback.h, fallback.m));
+    return fallback;
+  }
+
+  function startRound() {
+    state.round += 1;
+    if (state.round > SETTINGS.totalRounds) {
+      el.checkBtn.disabled = true;
+      el.skipBtn.disabled = true;
+      showResults();
+      return;
+    }
+
+    state.target = pickTargetTime();
+    setHandsToTime();
+    state.roundStartTs = performance.now();
+
+    el.stage.classList.remove('locked');
+    updateHUD();
+  }
+
+  function finishRound(wasCorrect) {
+    const seconds = (performance.now() - state.roundStartTs) / 1000;
+    state.roundTimes.push(seconds);
+
+    if (wasCorrect) {
+      state.correct += 1;
+      state.streak += 1;
+      state.bestStreak = Math.max(state.bestStreak, state.streak);
+    } else {
+      state.streak = 0;
+    }
+
+    maybeAdjustLevel(wasCorrect);
+    updateHUD();
+    startRound();
+  }
+
+  /**
+   * Answer checking
+   */
+  function checkAnswer() {
+    const target = targetAnglesForTime(state.target.h, state.target.m);
+
+    const dMin = angleDiff(state.minuteAngle, target.minuteAngle);
+    const dHour = angleDiff(state.hourAngle, target.hourAngle);
+
+    const okMin = dMin <= SETTINGS.tolMinuteDeg;
+    const okHour = dHour <= SETTINGS.tolHourDeg;
+
+    const ok = okMin && okHour;
+
+    flash(ok);
+    finishRound(ok);
+  }
+
+  function flash(ok) {
+    const original = document.body.style.background;
+    document.body.style.background = ok
+      ? 'radial-gradient(1200px 800px at 50% 20%, rgba(124,240,197,.25) 0%, #0b1020 55%)'
+      : 'radial-gradient(1200px 800px at 50% 20%, rgba(255,107,122,.22) 0%, #0b1020 55%)';
+    setTimeout(() => { document.body.style.background = original; }, 220);
+  }
+
+  /**
+   * Drawing
+   */
+  function getGeom() {
+    const rect = el.canvas.getBoundingClientRect();
+    const cw = rect.width;
+    const ch = rect.height;
+    const cx = cw / 2;
+    const cy = ch / 2;
+    const radius = Math.min(cw, ch) / 2 - 18;
+
+    const minuteLen = Math.max(120, radius - 95);
+    const hourLen = Math.max(90, radius - 170);
+
+    return { rect, cw, ch, cx, cy, radius, minuteLen, hourLen };
+  }
+
+  function draw() {
+    const w = el.canvas.width;
+    const h = el.canvas.height;
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,w,h);
+
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    const { cx, cy, radius, minuteLen, hourLen } = getGeom();
+
+    SETTINGS.minuteLen = minuteLen;
+    SETTINGS.hourLen = hourLen;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    ctx.beginPath();
+    ctx.arc(0,0,radius,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,.03)';
+    ctx.fill();
+
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(255,255,255,.10)';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0,0,radius-12,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(0,0,0,.20)';
+    ctx.fill();
+
+    // Ticks
+    for (let i=0;i<60;i++) {
+      const isHour = (i % 5 === 0);
+      const ang = (i * 6) * Math.PI/180;
+      const r1 = radius - 26;
+      const r2 = radius - (isHour ? 52 : 40);
+      const x1 = Math.sin(ang) * r1;
+      const y1 = -Math.cos(ang) * r1;
+      const x2 = Math.sin(ang) * r2;
+      const y2 = -Math.cos(ang) * r2;
+
+      ctx.beginPath();
+      ctx.moveTo(x1,y1);
+      ctx.lineTo(x2,y2);
+      ctx.lineWidth = isHour ? 8 : 3;
+      ctx.strokeStyle = isHour ? 'rgba(233,236,255,.72)' : 'rgba(233,236,255,.22)';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // Numerals (12, 3, 6, 9)
+    const nums = [
+      {t:'12',a:0},
+      {t:'3',a:90},
+      {t:'6',a:180},
+      {t:'9',a:270},
+    ];
+    ctx.fillStyle = 'rgba(233,236,255,.85)';
+    ctx.font = '700 44px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const n of nums) {
+      const ang = n.a * Math.PI/180;
+      const rr = radius - 108;
+      const x = Math.sin(ang) * rr;
+      const y = -Math.cos(ang) * rr;
+      ctx.fillText(n.t, x, y);
+    }
+
+    // Hands
+    drawHand(state.hourAngle, hourLen, SETTINGS.hourWidth, 'rgba(233,236,255,.92)', 0.12);
+    drawHand(state.minuteAngle, minuteLen, SETTINGS.minuteWidth, 'rgba(124,240,197,.92)', 0.08);
+
+    // Dashed guide lines
+    drawGuide(state.hourAngle, hourLen, radius);
+    drawGuide(state.minuteAngle, minuteLen, radius);
+
+    // Center cap
+    ctx.beginPath();
+    ctx.arc(0,0, SETTINGS.centerDot, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(233,236,255,.92)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(0,0, SETTINGS.centerDot-9, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(18,26,51,.95)';
+    ctx.fill();
+
+    ctx.restore();
+
+    function drawHand(angleDeg, len, width, color, shadowAlpha) {
+      const ang = angleDeg * Math.PI/180;
+      const x = Math.sin(ang) * len;
+      const y = -Math.cos(ang) * len;
+
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(x*1.01, y*1.01);
+      ctx.lineWidth = width + 2;
+      ctx.strokeStyle = `rgba(0,0,0,${shadowAlpha})`;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(x,y);
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      // grab knob near tip
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,.10)';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.stroke();
+    }
+
+    function drawGuide(angleDeg, handLen, radius) {
+      const ang = angleDeg * Math.PI / 180;
+      const x1 = Math.sin(ang) * (handLen + 10);
+      const y1 = -Math.cos(ang) * (handLen + 10);
+      const x2 = Math.sin(ang) * (radius - 18);
+      const y2 = -Math.cos(ang) * (radius - 18);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([10, 10]);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(233,236,255,.18)';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  /**
+   * Drag interactions (tips only)
+   */
+  function getCanvasPoint(evt) {
+    const rect = el.canvas.getBoundingClientRect();
+    const x = (evt.clientX - rect.left);
+    const y = (evt.clientY - rect.top);
+    return { x, y, rect };
+  }
+
+  function pickHandToDrag(x, y) {
+    const { cx, cy, minuteLen, hourLen } = getGeom();
+
+    const tipMinute = handTip(state.minuteAngle, minuteLen, cx, cy);
+    const tipHour = handTip(state.hourAngle, hourLen, cx, cy);
+
+    const dTipMin = dist(x, y, tipMinute.x, tipMinute.y);
+    const dTipHour = dist(x, y, tipHour.x, tipHour.y);
+
+    const tipThreshMin = 34;
+    const tipThreshHour = 32;
+
+    const nearMin = dTipMin <= tipThreshMin;
+    const nearHour = dTipHour <= tipThreshHour;
+
+    if (!nearMin && !nearHour) return null;
+    if (nearMin && nearHour) return dTipMin <= dTipHour ? 'minute' : 'hour';
+    return nearMin ? 'minute' : 'hour';
+  }
+
+  function handTip(angleDeg, len, cx, cy) {
+    const ang = angleDeg * Math.PI/180;
+    return {
+      x: cx + Math.sin(ang) * len,
+      y: cy - Math.cos(ang) * len,
+    };
+  }
+
+  function dist(x1,y1,x2,y2){
+    const dx=x1-x2, dy=y1-y2;
+    return Math.hypot(dx,dy);
+  }
+
+  function onPointerDown(evt) {
+    const { x, y } = getCanvasPoint(evt);
+    const hand = pickHandToDrag(x, y);
+    if (!hand) return;
+
+    state.dragging = hand;
+    state.pointerId = evt.pointerId;
+    el.canvas.setPointerCapture(evt.pointerId);
+
+    const { cx, cy } = getGeom();
+    const ang = pointToClockDeg(cx, cy, x, y);
+    if (hand === 'minute') state.minuteAngle = ang;
+    else state.hourAngle = ang;
+    draw();
+  }
+
+  function onPointerMove(evt) {
+    if (!state.dragging) return;
+    if (state.pointerId !== evt.pointerId) return;
+
+    const { x, y } = getCanvasPoint(evt);
+    const { cx, cy } = getGeom();
+    const ang = pointToClockDeg(cx, cy, x, y);
+
+    if (state.dragging === 'minute') state.minuteAngle = ang;
+    else state.hourAngle = ang;
+    draw();
+  }
+
+  function onPointerUp(evt) {
+    if (state.pointerId !== evt.pointerId) return;
+    state.dragging = null;
+    state.pointerId = null;
+    try { el.canvas.releasePointerCapture(evt.pointerId); } catch {}
+  }
+
+  el.canvas.addEventListener('pointerdown', onPointerDown);
+  el.canvas.addEventListener('pointermove', onPointerMove);
+  el.canvas.addEventListener('pointerup', onPointerUp);
+  el.canvas.addEventListener('pointercancel', onPointerUp);
+
+  /**
+   * Buttons / toggles
+   */
+  el.toggle24.addEventListener('change', () => {
+    state.use24h = el.toggle24.checked;
+    updateHUD();
+  });
+
+  el.checkBtn.addEventListener('click', checkAnswer);
+
+  el.skipBtn.addEventListener('click', () => {
+    flash(false);
+    finishRound(false);
+  });
+
+  el.resetBtn.addEventListener('click', resetGame);
+  el.restartBtn.addEventListener('click', resetGame);
+
+  function resetGame() {
+    state.level = 0;
+    state.round = 0;
+    state.correct = 0;
+    state.streak = 0;
+    state.bestStreak = 0;
+    state.wrongStreak = 0;
+    state.correctThisLevel = 0;
+    state.roundTimes = [];
+    state.seenKeys = new Set();
+
+    state.dragging = null;
+    state.pointerId = null;
+
+    el.checkBtn.disabled = false;
+    el.skipBtn.disabled = false;
+
+    el.stage.classList.remove('locked');
+    startRound();
+  }
+
+  /**
+   * Init
+   */
+  resizeCanvasToCSS();
+  resetGame();
+
+  window.__clockMatch = { state, targetAnglesForTime };
+})();
+</script>
+</body>
+</html>
