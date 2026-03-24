@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Precedence Network Builder</title>
+  <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/dist/vis-network.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-weight: 700;
+    }
+
+    input[type="number"], input[type="text"] {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      min-width: 120px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    button.secondary {
+      background: #4b5563;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f9fafb;
+    }
+
+    .checkbox-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 8px;
+      white-space: nowrap;
+    }
+
+    .network {
+      width: 100%;
+      height: 650px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+    }
+
+    .error {
+      color: var(--danger);
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: #047857;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .legend {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--accent-soft);
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Precedence Network Builder</h1>
+    <p>
+      Enter the number of activities, fill in each activity's duration, choose predecessor activities with checkboxes, and then generate a weighted directed network.
+    </p>
+
+    <div class="card">
+      <div class="row">
+        <label for="activityCount">Number of activities:</label>
+        <input type="number" id="activityCount" min="1" max="26" value="5" />
+        <button id="buildTableBtn">Generate Table</button>
+      </div>
+      <div class="small">Activities default to A, B, C, ... up to Z.</div>
+      <div id="tableContainer" style="margin-top:16px;"></div>
+      <div class="row" style="margin-top:16px;">
+        <button id="generateNetworkBtn">Generate Network Diagram</button>
+      </div>
+      <div id="message"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Network Diagram</h2>
+      <div id="network" class="network"></div>
+    </div>
+  </div>
+
+  <script>
+    const tableContainer = document.getElementById('tableContainer');
+    const message = document.getElementById('message');
+    const networkContainer = document.getElementById('network');
+    let networkInstance = null;
+
+    function activityName(index) {
+      return String.fromCharCode(65 + index);
+    }
+
+    function showMessage(text, type = 'error') {
+      message.className = type;
+      message.textContent = text;
+    }
+
+    function clearMessage() {
+      message.className = '';
+      message.textContent = '';
+    }
+
+    function buildTable(count, useExample = false) {
+      clearMessage();
+
+      let html = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Activity</th>
+                <th>Duration</th>
+                <th>Predecessor Activities</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      for (let i = 0; i < count; i++) {
+        const name = activityName(i);
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${name}</strong></td>
+            <td>
+              <input type="number" min="0" step="1" id="duration-${i}" placeholder="Duration" />
+            </td>
+            <td>
+              <div class="checkbox-grid">
+        `;
+
+        for (let j = 0; j < count; j++) {
+          if (j === i) continue;
+          const predName = activityName(j);
+          html += `
+            <label class="checkbox-item">
+              <input type="checkbox" class="pred-checkbox" data-row="${i}" data-pred="${j}" />
+              ${predName}
+            </label>
+          `;
+        }
+
+        html += `
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      tableContainer.innerHTML = html;
+
+      
+    }
+
+    
+
+    function collectData() {
+      const count = Number(document.getElementById('activityCount').value);
+      const activities = [];
+
+      for (let i = 0; i < count; i++) {
+        const duration = Number(document.getElementById(`duration-${i}`)?.value);
+        if (Number.isNaN(duration)) {
+          throw new Error(`Please enter a duration for activity ${activityName(i)}.`);
+        }
+        if (duration < 0) {
+          throw new Error(`Duration for activity ${activityName(i)} must be 0 or greater.`);
+        }
+
+        const predecessors = [];
+        document.querySelectorAll(`.pred-checkbox[data-row="${i}"]`).forEach(cb => {
+          if (cb.checked) predecessors.push(Number(cb.dataset.pred));
+        });
+
+        activities.push({
+          id: i,
+          name: activityName(i),
+          duration,
+          predecessors
+        });
+      }
+
+      return activities;
+    }
+
+    function hasCycle(activities) {
+      const state = new Array(activities.length).fill(0);
+      const adjacency = activities.map(() => []);
+
+      activities.forEach(activity => {
+        activity.predecessors.forEach(pred => {
+          adjacency[pred].push(activity.id);
+        });
+      });
+
+      function dfs(node) {
+        state[node] = 1;
+        for (const next of adjacency[node]) {
+          if (state[next] === 1) return true;
+          if (state[next] === 0 && dfs(next)) return true;
+        }
+        state[node] = 2;
+        return false;
+      }
+
+      for (let i = 0; i < activities.length; i++) {
+        if (state[i] === 0 && dfs(i)) return true;
+      }
+      return false;
+    }
+
+    function getAncestorClosure(activityId, activities, memo = {}) {
+      if (memo[activityId]) return memo[activityId];
+
+      const closure = new Set();
+      const stack = [...activities[activityId].predecessors];
+
+      while (stack.length) {
+        const current = stack.pop();
+        if (!closure.has(current)) {
+          closure.add(current);
+          activities[current].predecessors.forEach(pred => stack.push(pred));
+        }
+      }
+
+      memo[activityId] = closure;
+      return closure;
+    }
+
+    function setKey(setObj) {
+      return [...setObj].sort((a, b) => a - b).join('-');
+    }
+
+    function buildAOANetworkData(activities) {
+      const nodes = [];
+      const edges = [];
+      let edgeCounter = 0;
+      let eventCounter = 0;
+
+      const eventMap = new Map();
+
+      function eventKeyFromPreds(preds) {
+        return [...preds].sort((a, b) => a - b).join('-');
+      }
+
+      function ensureEvent(preds, labelOverride = '', isSpecial = false, fixedId = null) {
+        const key = fixedId || eventKeyFromPreds(preds);
+        if (!eventMap.has(key)) {
+          const id = fixedId || `ev${eventCounter++}`;
+          eventMap.set(key, id);
+          nodes.push({
+            id,
+            label: labelOverride || '',
+            shape: 'circle',
+            size: isSpecial ? 26 : 18,
+            color: isSpecial
+              ? { background: '#dbeafe', border: '#2563eb' }
+              : { background: '#ffffff', border: '#6b7280' },
+            borderWidth: isSpecial ? 3 : 2,
+            font: {
+              size: labelOverride ? 16 : 1,
+              color: '#111827',
+              face: 'Arial',
+              bold: Boolean(labelOverride)
+            }
+          });
+        }
+        return eventMap.get(key);
+      }
+
+      function addEdge(fromId, toId, options = {}) {
+        if (fromId === toId) return;
+
+        const duplicate = edges.some(edge =>
+          edge.from === fromId &&
+          edge.to === toId &&
+          Boolean(edge.dashes) === Boolean(options.dashes) &&
+          (edge.label || '') === (options.label || '')
+        );
+        if (duplicate) return;
+
+        edges.push({
+          id: `e${edgeCounter++}`,
+          from: fromId,
+          to: toId,
+          label: options.label || '',
+          arrows: {
+            middle: { enabled: true, scaleFactor: options.arrowScale || 0.9 }
+          },
+          dashes: Boolean(options.dashes),
+          width: options.width || (options.dashes ? 2 : 3),
+          color: { color: options.color || (options.dashes ? '#9ca3af' : '#2563eb') },
+          font: options.font || {
+            align: 'top',
+            size: 16,
+            bold: true,
+            face: 'Arial',
+            strokeWidth: 4,
+            strokeColor: '#ffffff'
+          },
+          smooth: {
+            enabled: true,
+            type: 'cubicBezier',
+            forceDirection: 'horizontal',
+            roundness: options.roundness ?? (options.dashes ? 0.25 : 0.2)
+          }
+        });
+      }
+
+      const startId = ensureEvent([], 'Start', true, 'START_NODE');
+      const finishId = ensureEvent([], 'Finish', true, 'FINISH_NODE');
+
+      const activityById = new Map(activities.map(a => [a.id, a]));
+      const successorsByActivity = new Map();
+      activities.forEach(activity => successorsByActivity.set(activity.id, []));
+      activities.forEach(activity => {
+        activity.predecessors.forEach(predId => {
+          successorsByActivity.get(predId).push(activity.id);
+        });
+      });
+
+      const startEventByActivity = new Map();
+      activities.forEach(activity => {
+        const startPreds = [...activity.predecessors].sort((a, b) => a - b);
+        const startIdForActivity = startPreds.length === 0
+          ? startId
+          : ensureEvent(startPreds);
+        startEventByActivity.set(activity.id, startIdForActivity);
+      });
+
+      const endEventByActivity = new Map();
+
+      function canActivityEndAtSuccessorStart(activityId, successorId) {
+        const successor = activityById.get(successorId);
+        if (!successor) return false;
+
+        const successorPreds = [...successor.predecessors].sort((a, b) => a - b);
+        if (!successorPreds.includes(activityId)) return false;
+
+        const otherPreds = successorPreds.filter(id => id !== activityId);
+        if (otherPreds.length === 0) return true;
+
+        // An activity can end directly at its successor's start event when doing so
+        // does not prevent any of the successor's other predecessors from keeping
+        // their own required outgoing structure.
+        return otherPreds.every(otherPredId => {
+          const otherSuccessors = successorsByActivity.get(otherPredId) || [];
+          return otherSuccessors.length >= 1;
+        });
+      }
+
+      activities.forEach(activity => {
+        const successors = successorsByActivity.get(activity.id) || [];
+
+        if (successors.length === 0) {
+          endEventByActivity.set(activity.id, finishId);
+          return;
+        }
+
+        if (successors.length === 1) {
+          const successorId = successors[0];
+          if (canActivityEndAtSuccessorStart(activity.id, successorId)) {
+            endEventByActivity.set(activity.id, startEventByActivity.get(successorId));
+            return;
+          }
+        }
+
+        endEventByActivity.set(activity.id, ensureEvent([activity.id]));
+      });
+
+      activities.forEach(activity => {
+        addEdge(
+          startEventByActivity.get(activity.id),
+          endEventByActivity.get(activity.id),
+          {
+            label: `${activity.name} (${activity.duration})`,
+            dashes: false,
+            color: '#2563eb',
+            width: 3,
+            arrowScale: 0.9,
+            roundness: 0.2,
+            font: {
+              align: 'top',
+              size: 16,
+              bold: true,
+              face: 'Arial',
+              strokeWidth: 4,
+              strokeColor: '#ffffff'
+            }
+          }
+        );
+      });
+
+      activities.forEach(activity => {
+        const activityStartId = startEventByActivity.get(activity.id);
+        activity.predecessors.forEach(predId => {
+          const predEndId = endEventByActivity.get(predId);
+          if (predEndId !== activityStartId) {
+            addEdge(predEndId, activityStartId, {
+              dashes: true,
+              color: '#9ca3af',
+              width: 2,
+              arrowScale: 0.7,
+              roundness: 0.25,
+              font: { size: 1 }
+            });
+          }
+        });
+      });
+
+      return { nodes, edges };
+    }
+
+    function renderNetwork() {
+      clearMessage();
+
+      try {
+        const activities = collectData();
+
+        if (hasCycle(activities)) {
+          throw new Error('The precedence relationships contain a cycle. Please remove circular dependencies.');
+        }
+
+        const { nodes, edges } = buildAOANetworkData(activities);
+
+        const data = {
+          nodes: new vis.DataSet(nodes),
+          edges: new vis.DataSet(edges)
+        };
+
+        const options = {
+          layout: {
+            hierarchical: {
+              enabled: true,
+              direction: 'LR',
+              sortMethod: 'directed',
+              levelSeparation: 170,
+              nodeSpacing: 110,
+              treeSpacing: 180,
+              blockShifting: true,
+              edgeMinimization: true,
+              parentCentralization: true
+            }
+          },
+          physics: false,
+          interaction: {
+            dragNodes: true,
+            dragView: true,
+            zoomView: true,
+            hover: true
+          },
+          nodes: {
+            shapeProperties: { interpolation: false }
+          },
+          edges: {
+            selectionWidth: 3,
+            hoverWidth: 3
+          }
+        };
+
+        if (networkInstance) {
+          networkInstance.destroy();
+        }
+
+        networkInstance = new vis.Network(networkContainer, data, options);
+        showMessage('Network diagram generated successfully with one Start point and one Finish point.', 'success');
+      } catch (error) {
+        showMessage(error.message || 'Unable to generate the network.');
+      }
+    }
+
+    document.getElementById('buildTableBtn').addEventListener('click', () => {
+      const count = Number(document.getElementById('activityCount').value);
+      if (!Number.isInteger(count) || count < 1 || count > 26) {
+        showMessage('Please enter a whole number of activities between 1 and 26.');
+        return;
+      }
+      buildTable(count);
+    });
+
+    document.getElementById('generateNetworkBtn').addEventListener('click', renderNetwork);
+
+    buildTable(Number(document.getElementById('activityCount').value));
+  </script>
+</body>
+</html>
