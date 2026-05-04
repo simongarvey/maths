@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Division Missing Digits Challenge</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #637083;
+      --accent: #2f6fed;
+      --accent-dark: #1f55bb;
+      --good: #0a7f42;
+      --bad: #b42318;
+      --line: #d6dde8;
+      --shadow: 0 18px 45px rgba(23, 32, 51, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #eaf1ff 0%, var(--bg) 42%, #eef3f8 100%);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(940px, 100%);
+      background: var(--card);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid rgba(214, 221, 232, 0.8);
+    }
+
+    header {
+      padding: 28px 32px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
+      letter-spacing: -0.04em;
+    }
+
+    p { margin: 0; color: var(--muted); line-height: 1.5; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(110px, 1fr));
+      gap: 12px;
+      min-width: 260px;
+    }
+
+    .stat {
+      padding: 12px 14px;
+      background: #f7f9fc;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+
+    .stat strong { font-size: 1.25rem; }
+
+    .content { padding: 30px 32px 34px; }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 26px;
+    }
+
+    .controls label { font-weight: 700; }
+
+    select, button, input {
+      font: inherit;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+
+    select {
+      padding: 10px 42px 10px 12px;
+      background: white;
+    }
+
+    button {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+      padding: 11px 18px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+
+    button:hover { background: var(--accent-dark); }
+    button:active { transform: translateY(1px); }
+
+    .intro {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #f8fbff;
+    }
+
+    .intro h2 { margin: 0 0 10px; }
+
+    .intro ul {
+      margin: 16px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .problem-wrap {
+      display: grid;
+      grid-template-columns: minmax(300px, 1fr) minmax(240px, 0.75fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .problem-card {
+      min-height: 330px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 30px 20px;
+    }
+
+    .division {
+      display: grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
+      align-items: end;
+      column-gap: 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.7rem, 8vw, 5rem);
+      line-height: 1;
+      color: #111827;
+    }
+
+    .number-grid {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 0.82em;
+      justify-content: end;
+      align-items: center;
+    }
+
+    .number-grid span,
+    .number-grid input {
+      width: 0.82em;
+      text-align: center;
+    }
+
+    .quotient {
+      grid-column: 2;
+      border-bottom: 4px solid #111827;
+      padding: 0 10px 8px;
+      min-height: 1.15em;
+    }
+
+    .divisor {
+      grid-column: 1;
+      grid-row: 2;
+      padding-right: 6px;
+    }
+
+    .dividend {
+      grid-column: 2;
+      grid-row: 2;
+      border-left: 4px solid #111827;
+      border-top: 4px solid #111827;
+      border-top-left-radius: 16px;
+      padding: 10px 12px 0;
+    }
+
+    .digit-box {
+      height: 0.95em;
+      font-family: inherit;
+      font-size: 0.86em;
+      line-height: 1;
+      padding: 0 0 0.05em;
+      border: 3px solid #111827;
+      border-radius: 7px;
+      color: #111827;
+      background: white;
+      vertical-align: baseline;
+    }
+
+    .digit-box:focus {
+      outline: 4px solid rgba(47, 111, 237, 0.25);
+      border-color: var(--accent);
+    }
+
+    .side-panel {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 22px;
+    }
+
+    .side-panel h2 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+    }
+
+    .message {
+      min-height: 54px;
+      margin-top: 16px;
+      font-weight: 750;
+    }
+
+    .message.good { color: var(--good); }
+    .message.bad { color: var(--bad); }
+
+    .finished {
+      display: none;
+      text-align: center;
+      padding: 32px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #f8fbff;
+    }
+
+    .finished.visible, .challenge.visible, .intro.visible { display: block; }
+    .challenge, .intro { display: none; }
+    .challenge.hidden, .intro.hidden { display: none; }
+
+    .finish-time {
+      font-size: clamp(2.4rem, 8vw, 5rem);
+      font-weight: 900;
+      margin: 18px 0 8px;
+      color: var(--accent-dark);
+      letter-spacing: -0.05em;
+    }
+
+    @media (max-width: 760px) {
+      header, .content { padding: 22px; }
+      .problem-wrap { grid-template-columns: 1fr; }
+      .stats { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Division Missing Digits</h1>
+        <p>Choose how many digits are hidden, then solve 5 problems as fast as you can.</p>
+      </div>
+      <section class="stats" aria-label="Challenge statistics">
+        <div class="stat"><span>Correct</span><strong id="correctCount">0 / 5</strong></div>
+        <div class="stat"><span>Time</span><strong id="timer">0.0s</strong></div>
+      </section>
+    </header>
+
+    <section class="content">
+      <div class="controls">
+        <label for="missingCount">Missing digits:</label>
+        <select id="missingCount">
+          <option value="1">1 digit</option>
+          <option value="2">2 digits</option>
+          <option value="3">3 digits</option>
+        </select>
+        <button id="startBtn" type="button">Start game</button>
+      </div>
+
+      <section id="intro" class="intro visible">
+        <h2>How to play</h2>
+        <p>When you press Start game, the timer begins and your first division problem appears.</p>
+        <ul>
+          <li>Type one digit in each empty box.</li>
+          <li>Press Enter in any box to submit your answer.</li>
+          <li>Keep going until you answer 5 problems correctly.</li>
+          <li>Try again to beat your time.</li>
+        </ul>
+      </section>
+
+      <section id="challenge" class="challenge">
+        <div class="problem-wrap">
+          <div class="problem-card" aria-live="polite">
+            <div id="problem" class="division"></div>
+          </div>
+
+          <aside class="side-panel">
+            <h2>Enter your answer</h2>
+            <p>Type one digit in each box, then press <strong>Enter</strong>.</p>
+            <div id="message" class="message"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="finished" class="finished" aria-live="polite">
+        <h2>Challenge complete!</h2>
+        <p>You answered 5 correctly in:</p>
+        <div id="finishTime" class="finish-time">0.0s</div>
+        <p>Start again and try to beat your time.</p>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const TARGET_CORRECT = 5;
+    const MAX_GENERATION_ATTEMPTS = 10000;
+
+    const problemEl = document.getElementById("problem");
+    const messageEl = document.getElementById("message");
+    const timerEl = document.getElementById("timer");
+    const correctCountEl = document.getElementById("correctCount");
+    const missingCountEl = document.getElementById("missingCount");
+    const startBtn = document.getElementById("startBtn");
+    const introEl = document.getElementById("intro");
+    const challengeEl = document.getElementById("challenge");
+    const finishedEl = document.getElementById("finished");
+    const finishTimeEl = document.getElementById("finishTime");
+
+    let currentProblem = null;
+    let correctCount = 0;
+    let startTime = null;
+    let timerId = null;
+    let usedProblemKeys = new Set();
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function digitsOf(number) {
+      return String(number).split("");
+    }
+
+    function sampleIndexes(length, count) {
+      const indexes = [...Array(length).keys()];
+      for (let i = indexes.length - 1; i > 0; i--) {
+        const j = randomInt(0, i);
+        [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+      }
+      return indexes.slice(0, count).sort((a, b) => a - b);
+    }
+
+    function makeSlotArray(label, value, totalPlaces) {
+      const digits = digitsOf(value);
+      const offset = totalPlaces - digits.length;
+      return digits.map((digit, index) => ({
+        label,
+        index,
+        place: offset + index,
+        digit
+      }));
+    }
+
+    function getAllSlots(candidate) {
+      const totalPlaces = String(candidate.dividend).length;
+      return [
+        ...makeSlotArray("quotient", candidate.quotient, totalPlaces),
+        ...makeSlotArray("divisor", candidate.divisor, String(candidate.divisor).length),
+        ...makeSlotArray("dividend", candidate.dividend, totalPlaces)
+      ];
+    }
+
+    function problemKey(candidate, hiddenSlots) {
+      const hiddenKey = hiddenSlots.map(slot => `${slot.label}:${slot.index}`).join("|");
+      return `${candidate.divisor}/${candidate.dividend}/${candidate.quotient}/${hiddenKey}`;
+    }
+
+    function visiblePattern(value, hiddenIndexes) {
+      return digitsOf(value).map((digit, index) => hiddenIndexes.has(index) ? "?" : digit).join("");
+    }
+
+    function countPossibleSolutions(candidate, hiddenSlots) {
+      const hiddenByLabel = {
+        quotient: new Set(hiddenSlots.filter(s => s.label === "quotient").map(s => s.index)),
+        divisor: new Set(hiddenSlots.filter(s => s.label === "divisor").map(s => s.index)),
+        dividend: new Set(hiddenSlots.filter(s => s.label === "dividend").map(s => s.index))
+      };
+
+      const qPattern = visiblePattern(candidate.quotient, hiddenByLabel.quotient);
+      const dPattern = visiblePattern(candidate.divisor, hiddenByLabel.divisor);
+      const nPattern = visiblePattern(candidate.dividend, hiddenByLabel.dividend);
+
+      let matches = 0;
+      for (let divisor = 2; divisor <= 9; divisor++) {
+        const dText = String(divisor);
+        if (!matchesPattern(dText, dPattern)) continue;
+
+        for (let quotient = 10; quotient <= 9999; quotient++) {
+          const qText = String(quotient);
+          if (qText.length !== String(candidate.quotient).length) continue;
+          if (!matchesPattern(qText, qPattern)) continue;
+
+          const dividend = divisor * quotient;
+          const nText = String(dividend);
+          if (nText.length !== String(candidate.dividend).length) continue;
+          if (!matchesPattern(nText, nPattern)) continue;
+
+          matches++;
+          if (matches > 1) return matches;
+        }
+      }
+      return matches;
+    }
+
+    function matchesPattern(text, pattern) {
+      if (text.length !== pattern.length) return false;
+      for (let i = 0; i < text.length; i++) {
+        if (pattern[i] !== "?" && pattern[i] !== text[i]) return false;
+      }
+      return true;
+    }
+
+    function generateProblem(missingCount) {
+      for (let attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
+        const divisor = randomInt(2, 9);
+        const quotient = randomInt(20, 999);
+        const dividend = divisor * quotient;
+
+        if (String(dividend).length < 3 || String(dividend).length > 4) continue;
+        if (String(quotient).length > String(dividend).length) continue;
+
+        const candidate = { divisor, quotient, dividend };
+        const slots = getAllSlots(candidate);
+        const hiddenIndexes = sampleIndexes(slots.length, missingCount);
+        const hiddenSlots = hiddenIndexes.map(index => slots[index]);
+        const key = problemKey(candidate, hiddenSlots);
+
+        if (usedProblemKeys.has(key)) continue;
+        if (countPossibleSolutions(candidate, hiddenSlots) !== 1) continue;
+
+        usedProblemKeys.add(key);
+        return { ...candidate, hiddenSlots };
+      }
+
+      throw new Error("Could not generate a unique, unambiguous problem. Try a different setting.");
+    }
+
+    function isHidden(label, index) {
+      return currentProblem.hiddenSlots.some(slot => slot.label === label && slot.index === index);
+    }
+
+    function renderNumber(label, value, totalPlaces) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "number-grid";
+      wrapper.style.gridTemplateColumns = `repeat(${totalPlaces}, 0.82em)`;
+
+      const digits = digitsOf(value);
+      const offset = totalPlaces - digits.length;
+
+      for (let place = 0; place < totalPlaces; place++) {
+        const digitIndex = place - offset;
+        const cell = document.createElement("span");
+
+        if (digitIndex < 0) {
+          cell.textContent = "";
+        } else if (isHidden(label, digitIndex)) {
+          const input = document.createElement("input");
+          input.className = "digit-box";
+          input.type = "text";
+          input.inputMode = "numeric";
+          input.maxLength = 1;
+          input.dataset.label = label;
+          input.dataset.index = String(digitIndex);
+          input.setAttribute("aria-label", `Missing digit in ${label}`);
+          input.addEventListener("keydown", event => {
+            if (event.key === "Enter") submitAnswer();
+          });
+          input.addEventListener("input", () => {
+            input.value = input.value.replace(/[^0-9]/g, "").slice(0, 1);
+          });
+          cell.appendChild(input);
+        } else {
+          cell.textContent = digits[digitIndex];
+        }
+
+        wrapper.appendChild(cell);
+      }
+
+      return wrapper;
+    }
+
+    function showProblem() {
+      const missingCount = Number(missingCountEl.value);
+      currentProblem = generateProblem(missingCount);
+      const totalPlaces = String(currentProblem.dividend).length;
+      problemEl.innerHTML = "";
+
+      const quotient = document.createElement("div");
+      quotient.className = "quotient";
+      quotient.appendChild(renderNumber("quotient", currentProblem.quotient, totalPlaces));
+
+      const divisor = document.createElement("div");
+      divisor.className = "divisor";
+      divisor.appendChild(renderNumber("divisor", currentProblem.divisor, 1));
+
+      const dividend = document.createElement("div");
+      dividend.className = "dividend";
+      dividend.appendChild(renderNumber("dividend", currentProblem.dividend, totalPlaces));
+
+      problemEl.append(quotient, divisor, dividend);
+      messageEl.textContent = "";
+      messageEl.className = "message";
+
+      const firstInput = problemEl.querySelector("input");
+      if (firstInput) firstInput.focus();
+    }
+
+    function submitAnswer() {
+      const inputs = [...problemEl.querySelectorAll("input")];
+
+      for (const input of inputs) {
+        if (!/^[0-9]$/.test(input.value)) {
+          messageEl.textContent = "Please enter one digit from 0 to 9 in every box before submitting.";
+          messageEl.className = "message bad";
+          input.focus();
+          return;
+        }
+      }
+
+      const allCorrect = inputs.every(input => {
+        const label = input.dataset.label;
+        const index = Number(input.dataset.index);
+        const correctDigit = String(currentProblem[label])[index];
+        return input.value === correctDigit;
+      });
+
+      if (!allCorrect) {
+        messageEl.textContent = "Not quite. Check the division and try again.";
+        messageEl.className = "message bad";
+        inputs[0].focus();
+        return;
+      }
+
+      correctCount++;
+      correctCountEl.textContent = `${correctCount} / ${TARGET_CORRECT}`;
+
+      if (correctCount >= TARGET_CORRECT) {
+        finishChallenge();
+      } else {
+        messageEl.textContent = "Correct! Here is the next one.";
+        messageEl.className = "message good";
+        setTimeout(showProblem, 450);
+      }
+    }
+
+    function formatTime(milliseconds) {
+      return `${(milliseconds / 1000).toFixed(1)}s`;
+    }
+
+    function startTimer() {
+      clearInterval(timerId);
+      startTime = Date.now();
+      timerId = setInterval(() => {
+        timerEl.textContent = formatTime(Date.now() - startTime);
+      }, 100);
+    }
+
+    function startChallenge() {
+      correctCount = 0;
+      usedProblemKeys = new Set();
+      correctCountEl.textContent = `0 / ${TARGET_CORRECT}`;
+      timerEl.textContent = "0.0s";
+      finishedEl.classList.remove("visible");
+      introEl.classList.remove("visible");
+      challengeEl.classList.add("visible");
+      startBtn.textContent = "Restart game";
+      startTimer();
+      showProblem();
+    }
+
+    function finishChallenge() {
+      clearInterval(timerId);
+      const elapsed = Date.now() - startTime;
+      timerEl.textContent = formatTime(elapsed);
+      finishTimeEl.textContent = formatTime(elapsed);
+      challengeEl.classList.remove("visible");
+      finishedEl.classList.add("visible");
+    }
+
+    startBtn.addEventListener("click", startChallenge);
+  </script>
+</body>
+</html>
