@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simplifying Surds Practice</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --correct: #16a34a;
+      --wrong: #dc2626;
+      --border: #d1d5db;
+      --soft: #eef2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #eef2ff, var(--bg));
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(900px, 100%);
+      background: var(--card);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(31, 41, 55, 0.12);
+      padding: 28px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .pill {
+      background: var(--soft);
+      color: var(--primary-dark);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .progress-wrap {
+      margin-bottom: 24px;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.25s ease;
+    }
+
+    .question-card {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 26px;
+      margin-bottom: 22px;
+    }
+
+    .prompt-label {
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+
+    .surd-display {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800;
+      text-align: center;
+      padding: 18px;
+      background: white;
+      border-radius: 18px;
+      border: 1px dashed var(--border);
+      margin: 12px 0 8px;
+    }
+
+    .instructions {
+      text-align: center;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .answer-area {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      font-size: 1.2rem;
+      padding: 13px 14px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      outline: none;
+      background: white;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .root-button {
+      margin-top: 26px;
+      font-size: 1.7rem;
+      font-weight: 800;
+      border: none;
+      background: var(--primary);
+      color: white;
+      border-radius: 14px;
+      padding: 11px 18px;
+      cursor: pointer;
+    }
+
+    .root-button:hover,
+    .primary-button:hover,
+    .secondary-button:hover {
+      filter: brightness(0.96);
+    }
+
+    .preview {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 18px;
+      text-align: center;
+      font-size: 1.35rem;
+      min-height: 58px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    button {
+      transition: transform 0.08s ease, filter 0.15s ease;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .primary-button,
+    .secondary-button {
+      border: none;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary-button {
+      background: var(--primary);
+      color: white;
+    }
+
+    .secondary-button {
+      background: #e5e7eb;
+      color: var(--text);
+    }
+
+    .feedback {
+      min-height: 32px;
+      font-weight: 700;
+      margin-top: 14px;
+    }
+
+    .feedback.correct {
+      color: var(--correct);
+    }
+
+    .feedback.wrong {
+      color: var(--wrong);
+    }
+
+    .summary {
+      display: none;
+    }
+
+    .summary h2 {
+      margin-top: 0;
+      font-size: 2rem;
+    }
+
+    .score-box {
+      background: var(--soft);
+      color: var(--primary-dark);
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+
+    th,
+    td {
+      padding: 13px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f3f4f6;
+    }
+
+    tr.correct-row td:first-child {
+      color: var(--correct);
+      font-weight: 800;
+    }
+
+    tr.wrong-row td:first-child {
+      color: var(--wrong);
+      font-weight: 800;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        padding: 20px;
+      }
+
+      header {
+        flex-direction: column;
+      }
+
+      .answer-area {
+        grid-template-columns: 1fr;
+      }
+
+      .root-button {
+        margin-top: 0;
+      }
+
+      table {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="gameScreen">
+      <header>
+        <div>
+          <h1>Simplifying Surds</h1>
+          <p class="subtitle">Simplify each surd into the form <strong>a√b</strong>. Enter the rational part first, then press the root button to enter the irrational part.</p>
+        </div>
+        <div class="pill" id="levelPill">Level 1</div>
+      </header>
+
+      <div class="progress-wrap">
+        <div class="progress-text">
+          <span id="questionNumber">Question 1 of 8</span>
+
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <p class="prompt-label">Simplify:</p>
+        <div class="surd-display" id="questionDisplay">√12</div>
+        <p class="instructions">Example: for 3√5, type <strong>3</strong>, press <strong>√</strong>, then type <strong>5</strong>.</p>
+      </div>
+
+      <form id="answerForm">
+        <div class="answer-area">
+          <div>
+            <label for="rationalInput">Rational part</label>
+            <input id="rationalInput" type="number" min="1" step="1" autocomplete="off" />
+          </div>
+
+          <button type="button" class="root-button" id="rootButton" aria-label="Move to irrational part">√</button>
+
+          <div>
+            <label for="irrationalInput">Irrational part</label>
+            <input id="irrationalInput" type="number" min="1" step="1" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="preview" id="answerPreview">Your answer will appear here</div>
+
+        <div class="buttons">
+          <button class="primary-button" type="submit" id="checkButton">Check answer</button>
+          <button class="secondary-button hidden" type="button" id="nextButton">Next question</button>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+      </form>
+    </section>
+
+    <section class="summary" id="summaryScreen">
+      <h2>Game Summary</h2>
+      <div class="score-box" id="scoreBox"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Result</th>
+            <th>Question</th>
+            <th>Your answer</th>
+            <th>Correct answer</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+      <button class="primary-button" id="restartButton">Play again</button>
+    </section>
+  </main>
+
+  <script>
+    const TOTAL_QUESTIONS = 8;
+
+    const state = {
+      questionIndex: 0,
+      level: 1,
+      correctStreak: 0,
+      results: [],
+      currentQuestion: null,
+      checked: false
+    };
+
+    const questionDisplay = document.getElementById("questionDisplay");
+    const questionNumber = document.getElementById("questionNumber");
+
+    const progressFill = document.getElementById("progressFill");
+    const levelPill = document.getElementById("levelPill");
+    const rationalInput = document.getElementById("rationalInput");
+    const irrationalInput = document.getElementById("irrationalInput");
+    const rootButton = document.getElementById("rootButton");
+    const answerForm = document.getElementById("answerForm");
+    const answerPreview = document.getElementById("answerPreview");
+    const feedback = document.getElementById("feedback");
+    const checkButton = document.getElementById("checkButton");
+    const nextButton = document.getElementById("nextButton");
+    const gameScreen = document.getElementById("gameScreen");
+    const summaryScreen = document.getElementById("summaryScreen");
+    const scoreBox = document.getElementById("scoreBox");
+    const summaryBody = document.getElementById("summaryBody");
+    const restartButton = document.getElementById("restartButton");
+
+    function randomItem(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function gcd(a, b) {
+      while (b !== 0) {
+        const temp = b;
+        b = a % b;
+        a = temp;
+      }
+      return a;
+    }
+
+    function isPerfectSquare(n) {
+      return Number.isInteger(Math.sqrt(n));
+    }
+
+    function simplifySurd(n) {
+      let rational = 1;
+      let irrational = n;
+
+      for (let factor = Math.floor(Math.sqrt(n)); factor >= 2; factor--) {
+        const square = factor * factor;
+        if (n % square === 0) {
+          rational = factor;
+          irrational = n / square;
+          break;
+        }
+      }
+
+      return { rational, irrational };
+    }
+
+    function generateQuestion(level) {
+      let squareFactors;
+      let irrationalParts;
+      let outsideMultipliers;
+
+      if (level === 1) {
+        squareFactors = [2, 3, 4, 5];
+        irrationalParts = [2, 3, 5, 6, 7, 10];
+        outsideMultipliers = [1];
+      } else if (level === 2) {
+        squareFactors = [3, 4, 5, 6, 7, 8];
+        irrationalParts = [2, 3, 5, 6, 7, 10, 11, 13];
+        outsideMultipliers = [1, 1, 2, 3, 4];
+      } else {
+        squareFactors = [5, 6, 7, 8, 9, 10, 11, 12];
+        irrationalParts = [2, 3, 5, 6, 7, 10, 11, 13, 14, 15, 17, 19];
+        outsideMultipliers = [1, 2, 3, 4, 5, 6];
+      }
+
+      let rational = randomItem(squareFactors);
+      let irrational = randomItem(irrationalParts);
+      const outsideMultiplier = randomItem(outsideMultipliers);
+
+      while (gcd(rational * rational, irrational) !== 1 || isPerfectSquare(irrational)) {
+        irrational = randomItem(irrationalParts);
+      }
+
+      const radicand = rational * rational * irrational;
+      const simplified = simplifySurd(radicand);
+
+      return {
+        outsideMultiplier,
+        radicand,
+        rational: outsideMultiplier * simplified.rational,
+        irrational: simplified.irrational
+      };
+    }
+
+    function formatSurd(rational, irrational) {
+      if (!rational || !irrational) return "";
+      if (irrational === 1) return String(rational);
+      if (rational === 1) return `√${irrational}`;
+      return `${rational}√${irrational}`;
+    }
+
+    function updatePreview() {
+      const rational = Number(rationalInput.value);
+      const irrational = Number(irrationalInput.value);
+      const text = formatSurd(rational, irrational);
+      answerPreview.textContent = text || "Your answer will appear here";
+    }
+
+    function updateDifficulty(wasCorrect) {
+      if (wasCorrect) {
+        state.correctStreak++;
+        if (state.correctStreak >= 2 && state.level < 3) {
+          state.level++;
+          state.correctStreak = 0;
+        }
+      } else {
+        state.correctStreak = 0;
+        if (state.level > 1) state.level--;
+      }
+    }
+
+    function loadQuestion() {
+      state.checked = false;
+      state.currentQuestion = generateQuestion(state.level);
+
+      questionDisplay.textContent = state.currentQuestion.outsideMultiplier === 1
+        ? `√${state.currentQuestion.radicand}`
+        : `${state.currentQuestion.outsideMultiplier}√${state.currentQuestion.radicand}`;
+      questionNumber.textContent = `Question ${state.questionIndex + 1} of ${TOTAL_QUESTIONS}`;
+
+      progressFill.style.width = `${(state.questionIndex / TOTAL_QUESTIONS) * 100}%`;
+      levelPill.textContent = `Level ${state.level}`;
+
+      rationalInput.value = "";
+      irrationalInput.value = "";
+      rationalInput.disabled = false;
+      irrationalInput.disabled = false;
+      checkButton.disabled = false;
+      checkButton.classList.remove("hidden");
+      nextButton.classList.add("hidden");
+      feedback.textContent = "";
+      feedback.className = "feedback";
+      updatePreview();
+      rationalInput.focus();
+    }
+
+    function checkAnswer(event) {
+      event.preventDefault();
+      if (state.checked) return;
+
+      const userRational = Number(rationalInput.value);
+      const userIrrational = Number(irrationalInput.value);
+      const correctRational = state.currentQuestion.rational;
+      const correctIrrational = state.currentQuestion.irrational;
+
+      if (!Number.isInteger(userRational) || !Number.isInteger(userIrrational) || userRational < 1 || userIrrational < 1) {
+        feedback.textContent = "Please enter a positive whole number in both boxes.";
+        feedback.className = "feedback wrong";
+        return;
+      }
+
+      const wasCorrect = userRational === correctRational && userIrrational === correctIrrational;
+
+      state.results.push({
+        question: state.currentQuestion.outsideMultiplier === 1
+          ? `√${state.currentQuestion.radicand}`
+          : `${state.currentQuestion.outsideMultiplier}√${state.currentQuestion.radicand}`,
+        userAnswer: formatSurd(userRational, userIrrational),
+        correctAnswer: formatSurd(correctRational, correctIrrational),
+        wasCorrect
+      });
+
+      feedback.textContent = wasCorrect
+        ? "Correct! Great simplifying."
+        : `Not quite. The correct answer is ${formatSurd(correctRational, correctIrrational)}.`;
+      feedback.className = wasCorrect ? "feedback correct" : "feedback wrong";
+
+      updateDifficulty(wasCorrect);
+      state.checked = true;
+      rationalInput.disabled = true;
+      irrationalInput.disabled = true;
+      checkButton.classList.add("hidden");
+      nextButton.classList.remove("hidden");
+
+      if (state.questionIndex === TOTAL_QUESTIONS - 1) {
+        nextButton.textContent = "Show summary";
+      } else {
+        nextButton.textContent = "Next question";
+      }
+    }
+
+    function nextQuestion() {
+      state.questionIndex++;
+      progressFill.style.width = `${(state.questionIndex / TOTAL_QUESTIONS) * 100}%`;
+
+      if (state.questionIndex >= TOTAL_QUESTIONS) {
+        showSummary();
+      } else {
+        loadQuestion();
+      }
+    }
+
+    function showSummary() {
+      gameScreen.style.display = "none";
+      summaryScreen.style.display = "block";
+      progressFill.style.width = "100%";
+
+      const correctCount = state.results.filter(result => result.wasCorrect).length;
+      scoreBox.textContent = `You scored ${correctCount} out of ${TOTAL_QUESTIONS}.`;
+
+      summaryBody.innerHTML = "";
+      state.results.forEach((result, index) => {
+        const row = document.createElement("tr");
+        row.className = result.wasCorrect ? "correct-row" : "wrong-row";
+        row.innerHTML = `
+          <td>${result.wasCorrect ? "Correct" : "Incorrect"}</td>
+          <td>${index + 1}. ${result.question}</td>
+          <td>${result.userAnswer}</td>
+          <td>${result.correctAnswer}</td>
+        `;
+        summaryBody.appendChild(row);
+      });
+    }
+
+    function restartGame() {
+      state.questionIndex = 0;
+      state.level = 1;
+      state.correctStreak = 0;
+      state.results = [];
+      state.currentQuestion = null;
+      state.checked = false;
+
+      gameScreen.style.display = "block";
+      summaryScreen.style.display = "none";
+      loadQuestion();
+    }
+
+    rootButton.addEventListener("click", () => {
+      irrationalInput.focus();
+    });
+
+    rationalInput.addEventListener("input", updatePreview);
+    irrationalInput.addEventListener("input", updatePreview);
+    answerForm.addEventListener("submit", checkAnswer);
+    nextButton.addEventListener("click", nextQuestion);
+    restartButton.addEventListener("click", restartGame);
+
+    loadQuestion();
+  </script>
+</body>
+</html>
