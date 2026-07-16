@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fractions of Amounts — Tape Diagram Challenge</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #667085;
+      --panel: #ffffff;
+      --page: #f4f7fb;
+      --accent: #0ea5a8;
+      --accent-dark: #087f82;
+      --tape: #cfe3f6;
+      --tape-used: #75a9d6;
+      --line: #24415d;
+      --good: #16803c;
+      --bad: #b42318;
+      --gold: #f59e0b;
+      --shadow: 0 16px 40px rgba(24, 39, 75, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(14,165,168,.12), transparent 32rem),
+        var(--page);
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(980px, calc(100% - 28px));
+      margin: 24px auto;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.7rem, 4vw, 2.55rem);
+      line-height: 1.08;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .score-card {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(80px, 1fr));
+      gap: 8px;
+      padding: 10px;
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .stat {
+      min-width: 82px;
+      text-align: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+
+    .stat strong { display: block; font-size: 1.35rem; }
+    .stat span { color: var(--muted); font-size: .8rem; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #e3e8ef;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid #edf0f4;
+      background: #fbfcfe;
+    }
+
+    .progress-wrap { flex: 1; }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .progress {
+      height: 9px;
+      border-radius: 999px;
+      background: #e9eef5;
+      overflow: hidden;
+    }
+
+    .progress > div {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), #37c6a2);
+      transition: width .3s ease;
+    }
+
+    .points-badge {
+      flex: 0 0 auto;
+      padding: 9px 13px;
+      border-radius: 999px;
+      color: #7a4a00;
+      background: #fff4d6;
+      font-weight: 700;
+    }
+
+    .content { padding: clamp(20px, 4vw, 36px); }
+
+    .question {
+      text-align: center;
+      font-size: clamp(1.7rem, 4vw, 2.55rem);
+      font-weight: 750;
+      margin: 0 0 22px;
+    }
+
+    .fraction {
+      display: inline-grid;
+      grid-template-rows: 1fr 1fr;
+      vertical-align: middle;
+      line-height: 1;
+      margin: 0 .14em;
+      font-size: .88em;
+    }
+
+    .fraction .num {
+      border-bottom: 2px solid currentColor;
+      padding: 0 .14em .08em;
+    }
+
+    .fraction .den { padding-top: .08em; }
+
+    .diagram-shell {
+      position: relative;
+      margin: 0 auto 24px;
+      width: min(760px, 100%);
+      padding: 44px 18px 58px;
+    }
+
+    .amount-line {
+      position: absolute;
+      top: 5px;
+      left: 10%;
+      width: 80%;
+      text-align: center;
+      font-size: 1.18rem;
+      font-weight: 700;
+    }
+
+    .amount-line::before,
+    .amount-line::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 2px;
+      background: var(--ink);
+    }
+
+    .amount-line::before { left: 0; }
+    .amount-line::after { right: 0; }
+
+    .arrow-left,
+    .arrow-right {
+      position: absolute;
+      top: calc(50% - 5px);
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+    .arrow-left { left: -1px; border-right: 9px solid var(--ink); }
+    .arrow-right { right: -1px; border-left: 9px solid var(--ink); }
+
+    .amount-text {
+      position: relative;
+      z-index: 2;
+      display: inline-block;
+      padding: 0 10px;
+      background: var(--panel);
+    }
+
+    .tape {
+      position: relative;
+      display: grid;
+      height: clamp(96px, 16vw, 132px);
+      border: 3px solid var(--line);
+      background: var(--tape);
+      border-radius: 7px 7px 0 0;
+      overflow: visible;
+    }
+
+    .segment {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--tape);
+      font-size: clamp(1.25rem, 4vw, 1.85rem);
+      font-weight: 750;
+      transition: background .25s ease;
+    }
+
+    .segment.selected { background: var(--tape-used); }
+    .segment.divided:not(:last-child) { border-right: 2px solid rgba(36,65,93,.65); }
+
+    .value-label {
+      opacity: 0;
+      transform: translateY(5px);
+      transition: .2s ease;
+    }
+    .show-values .value-label { opacity: 1; transform: translateY(0); }
+
+    .axis {
+      position: absolute;
+      left: -5%;
+      width: 110%;
+      bottom: -3px;
+      height: 3px;
+      background: var(--ink);
+    }
+
+    .axis::after {
+      content: "";
+      position: absolute;
+      right: -2px;
+      top: -6px;
+      width: 0;
+      height: 0;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 12px solid var(--ink);
+    }
+
+    .axis-label {
+      position: absolute;
+      top: calc(100% + 9px);
+      font-size: 1.22rem;
+      font-weight: 600;
+    }
+    .axis-label.zero { left: 0; transform: translateX(-50%); }
+    .axis-label.one { right: 0; transform: translateX(50%); }
+
+    .fraction-marker {
+      position: absolute;
+      top: calc(100% + 10px);
+      transform: translateX(-50%);
+      color: var(--line);
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity .2s ease;
+      white-space: nowrap;
+    }
+    .show-fractions .fraction-marker { opacity: 1; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      max-width: 610px;
+      margin: 0 auto;
+    }
+
+    .answer-box {
+      min-width: 0;
+      padding: 15px 17px;
+      border: 2px solid #cad3df;
+      border-radius: 14px;
+      font-size: 1.2rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .answer-box:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(14,165,168,.14);
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 19px;
+      cursor: pointer;
+      font-weight: 750;
+      transition: transform .08s ease, filter .15s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:hover { filter: brightness(.97); }
+    .btn.primary { color: white; background: var(--accent); }
+    .btn.secondary { color: var(--accent-dark); background: #e5f8f7; }
+    .btn.dark { color: white; background: #24364b; }
+    .btn:disabled { cursor: not-allowed; opacity: .5; }
+
+    .below-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 13px;
+    }
+
+    .feedback {
+      min-height: 30px;
+      margin: 17px 0 0;
+      text-align: center;
+      font-weight: 700;
+    }
+    .feedback.good { color: var(--good); }
+    .feedback.bad { color: var(--bad); }
+
+    .help-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-top: 8px;
+    }
+
+    .start-screen, .finish-screen {
+      padding: 46px 28px;
+      text-align: center;
+    }
+    .start-screen h2, .finish-screen h2 { font-size: 2rem; margin: 0 0 10px; }
+    .start-screen p, .finish-screen p { color: var(--muted); max-width: 650px; margin: 0 auto 22px; line-height: 1.6; }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-width: 680px;
+      margin: 22px auto;
+    }
+    .rule {
+      padding: 14px 10px;
+      background: #f8fafc;
+      border-radius: 13px;
+      font-size: .9rem;
+    }
+    .rule strong { display: block; color: var(--accent-dark); font-size: 1.3rem; }
+
+    .summary {
+      margin: 24px auto 0;
+      max-width: 720px;
+      text-align: left;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .summary th, .summary td { padding: 10px 12px; border-bottom: 1px solid #e5e9ef; }
+    .summary th { color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 720px) {
+      .hero { display: block; }
+      .score-card { margin-top: 15px; }
+      .controls { grid-template-columns: 1fr; }
+      .rules { grid-template-columns: repeat(2, 1fr); }
+      .amount-line::before, .amount-line::after { width: 35%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="hero">
+      <div>
+        <h1>Fractions of Amounts</h1>
+        <p class="subtitle">Use the tape diagram when you need help.</p>
+      </div>
+      <div class="score-card" aria-label="Game statistics">
+        <div class="stat"><strong id="score">0</strong><span>Points</span></div>
+        <div class="stat"><strong id="correct">0</strong><span>Correct</span></div>
+        <div class="stat"><strong id="streak">0</strong><span>Streak</span></div>
+      </div>
+    </div>
+
+    <section class="card">
+      <div id="startScreen" class="start-screen">
+        <h2>Tape Diagram Challenge</h2>
+        <p>Answer each question as early as you can. Each help click reveals another part of the tape diagram, but reduces the points available for that question.</p>
+        <div class="rules">
+          <div class="rule"><strong>4</strong>No help</div>
+          <div class="rule"><strong>3</strong>Tape divided</div>
+          <div class="rule"><strong>2</strong>Fractions shown</div>
+          <div class="rule"><strong>1</strong>Values shown</div>
+        </div>
+        <button class="btn primary" id="startBtn">Start game</button>
+      </div>
+
+      <div id="gameScreen" class="hidden">
+        <div class="topbar">
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span id="questionCount">Question 1 of 10</span>
+              <span id="progressText">0% complete</span>
+            </div>
+            <div class="progress"><div id="progressBar"></div></div>
+          </div>
+          <div class="points-badge"><span id="availablePoints">4</span> points available</div>
+        </div>
+
+        <div class="content">
+          <p class="question" id="questionText"></p>
+
+          <div class="diagram-shell" aria-label="Tape diagram">
+            <div class="amount-line">
+              <span class="arrow-left"></span>
+              <span class="amount-text" id="amountText"></span>
+              <span class="arrow-right"></span>
+            </div>
+            <div class="tape" id="tape">
+              <div class="axis"></div>
+              <span class="axis-label zero">0</span>
+              <span class="axis-label one">1</span>
+            </div>
+          </div>
+
+          <div class="controls">
+            <input id="answerInput" class="answer-box" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" placeholder="Enter your answer" aria-label="Answer" />
+            <button id="checkBtn" class="btn primary">Check answer</button>
+          </div>
+
+          <div class="below-controls">
+            <button id="helpBtn" class="btn secondary">Show first help</button>
+            <button id="nextBtn" class="btn dark hidden">Next question</button>
+          </div>
+          <div id="feedback" class="feedback" aria-live="polite"></div>
+          <div id="helpNote" class="help-note">Try it without help for 4 points.</div>
+        </div>
+      </div>
+
+      <div id="finishScreen" class="finish-screen hidden">
+        <h2>Game complete!</h2>
+        <p id="finalMessage"></p>
+        <button class="btn primary" id="playAgainBtn">Play again</button>
+        <table class="summary">
+          <thead><tr><th>Question</th><th>Your answer</th><th>Correct answer</th><th>Points</th></tr></thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const FRACTIONS = [
+      { n: 1, d: 4 }, { n: 2, d: 4 }, { n: 3, d: 4 },
+      { n: 1, d: 5 }, { n: 2, d: 5 }, { n: 3, d: 5 }, { n: 4, d: 5 }
+    ];
+
+    const TOTAL_QUESTIONS = 10;
+    const MULTIPLIERS = [4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 22, 24, 25];
+
+    let questions = [];
+    let index = 0;
+    let score = 0;
+    let correctCount = 0;
+    let streak = 0;
+    let helpLevel = 0;
+    let answered = false;
+    let attempts = 0;
+    let results = [];
+
+    const $ = id => document.getElementById(id);
+
+    function fractionHTML(n, d) {
+      return `<span class="fraction" aria-label="${n} over ${d}"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+    }
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function makeQuestions() {
+      const set = [];
+      const used = new Set();
+      let fractionPool = shuffle(FRACTIONS);
+
+      while (set.length < TOTAL_QUESTIONS) {
+        if (fractionPool.length === 0) fractionPool = shuffle(FRACTIONS);
+        const frac = fractionPool.pop();
+        const multiplier = MULTIPLIERS[Math.floor(Math.random() * MULTIPLIERS.length)];
+        const amount = frac.d * multiplier;
+        const key = `${frac.n}/${frac.d}:${amount}`;
+        if (used.has(key)) continue;
+        used.add(key);
+        set.push({ ...frac, amount, answer: frac.n * multiplier });
+      }
+      return set;
+    }
+
+    function updateStats() {
+      $('score').textContent = score;
+      $('correct').textContent = correctCount;
+      $('streak').textContent = streak;
+    }
+
+    function renderQuestion() {
+      answered = false;
+      attempts = 0;
+      helpLevel = 0;
+      const q = questions[index];
+
+      $('questionText').innerHTML = `Find ${fractionHTML(q.n, q.d)} of ${q.amount}`;
+      $('amountText').textContent = q.amount;
+      $('questionCount').textContent = `Question ${index + 1} of ${TOTAL_QUESTIONS}`;
+      const pct = Math.round((index / TOTAL_QUESTIONS) * 100);
+      $('progressText').textContent = `${pct}% complete`;
+      $('progressBar').style.width = `${pct}%`;
+      $('availablePoints').textContent = 4;
+      $('feedback').textContent = '';
+      $('feedback').className = 'feedback';
+      $('helpNote').textContent = 'Try it without help for 4 points.';
+      $('helpBtn').textContent = 'Show first help';
+      $('helpBtn').disabled = false;
+      $('helpBtn').classList.remove('hidden');
+      $('nextBtn').classList.add('hidden');
+      $('answerInput').disabled = false;
+      $('checkBtn').disabled = false;
+      $('answerInput').value = '';
+      $('answerInput').focus();
+
+      buildTape(q);
+    }
+
+    function buildTape(q) {
+      const tape = $('tape');
+      tape.className = 'tape';
+      tape.style.gridTemplateColumns = `repeat(${q.d}, 1fr)`;
+      tape.innerHTML = '<div class="axis"></div><span class="axis-label zero">0</span><span class="axis-label one">1</span>';
+
+      for (let i = 1; i <= q.d; i++) {
+        const segment = document.createElement('div');
+        segment.className = 'segment';
+        segment.dataset.part = i;
+        segment.innerHTML = `<span class="value-label">${q.amount / q.d}</span>`;
+        tape.appendChild(segment);
+      }
+
+      for (let i = 1; i < q.d; i++) {
+        const marker = document.createElement('div');
+        marker.className = 'fraction-marker';
+        marker.style.left = `${(i / q.d) * 100}%`;
+        marker.innerHTML = fractionHTML(i, q.d);
+        tape.appendChild(marker);
+      }
+    }
+
+    function revealHelp() {
+      if (answered || helpLevel >= 3) return;
+      helpLevel++;
+      const q = questions[index];
+      const tape = $('tape');
+      const segments = [...tape.querySelectorAll('.segment')];
+
+      if (helpLevel === 1) {
+        segments.forEach((segment, i) => {
+          segment.classList.add('divided');
+          if (i < q.n) segment.classList.add('selected');
+        });
+        $('helpBtn').textContent = 'Show fraction labels';
+        $('helpNote').textContent = `The whole has been divided into ${q.d} equal parts.`;
+      } else if (helpLevel === 2) {
+        tape.classList.add('show-fractions');
+        $('helpBtn').textContent = 'Show each part’s value';
+        $('helpNote').textContent = `Count ${q.n} of the ${q.d} equal parts.`;
+      } else {
+        tape.classList.add('show-values');
+        $('helpBtn').disabled = true;
+        $('helpBtn').textContent = 'All help shown';
+        $('helpNote').textContent = `${q.amount} ÷ ${q.d} = ${q.amount / q.d}, so each part is worth ${q.amount / q.d}.`;
+      }
+      $('availablePoints').textContent = 4 - helpLevel;
+    }
+
+    function checkAnswer() {
+      if (answered) return;
+      const q = questions[index];
+      const raw = $('answerInput').value.trim();
+      if (raw === '') {
+        showFeedback('Enter an answer first.', false);
+        return;
+      }
+
+      const userAnswer = Number(raw);
+      attempts++;
+
+      if (userAnswer === q.answer) {
+        answered = true;
+        const earned = Math.max(1, 4 - helpLevel);
+        score += earned;
+        correctCount++;
+        streak++;
+        results.push({ q, userAnswer, earned });
+        updateStats();
+        showFeedback(`Correct! ${fractionHTML(q.n, q.d)} of ${q.amount} is ${q.answer}. You earned ${earned} point${earned === 1 ? '' : 's'}.`, true, true);
+        $('answerInput').disabled = true;
+        $('checkBtn').disabled = true;
+        $('helpBtn').classList.add('hidden');
+        $('nextBtn').classList.remove('hidden');
+        $('nextBtn').focus();
+      } else {
+        streak = 0;
+        updateStats();
+        showFeedback('Not quite. Check how many equal parts you need, then try again.', false);
+        $('answerInput').select();
+      }
+    }
+
+    function showFeedback(message, good, html = false) {
+      const el = $('feedback');
+      if (html) el.innerHTML = message;
+      else el.textContent = message;
+      el.className = `feedback ${good ? 'good' : 'bad'}`;
+    }
+
+    function nextQuestion() {
+      index++;
+      if (index >= TOTAL_QUESTIONS) finishGame();
+      else renderQuestion();
+    }
+
+    function finishGame() {
+      $('gameScreen').classList.add('hidden');
+      $('finishScreen').classList.remove('hidden');
+      $('progressBar').style.width = '100%';
+      $('finalMessage').textContent = `You answered ${correctCount} questions correctly and scored ${score} out of a possible ${TOTAL_QUESTIONS * 4} points.`;
+      $('summaryBody').innerHTML = results.map((r, i) => `
+        <tr>
+          <td>${i + 1}. ${r.q.n}/${r.q.d} of ${r.q.amount}</td>
+          <td>${r.userAnswer}</td>
+          <td>${r.q.answer}</td>
+          <td>${r.earned}</td>
+        </tr>`).join('');
+    }
+
+    function startGame() {
+      questions = makeQuestions();
+      index = 0;
+      score = 0;
+      correctCount = 0;
+      streak = 0;
+      results = [];
+      updateStats();
+      $('startScreen').classList.add('hidden');
+      $('finishScreen').classList.add('hidden');
+      $('gameScreen').classList.remove('hidden');
+      renderQuestion();
+    }
+
+    $('startBtn').addEventListener('click', startGame);
+    $('playAgainBtn').addEventListener('click', startGame);
+    $('helpBtn').addEventListener('click', revealHelp);
+    $('checkBtn').addEventListener('click', checkAnswer);
+    $('nextBtn').addEventListener('click', nextQuestion);
+    $('answerInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+  </script>
+</body>
+</html>
