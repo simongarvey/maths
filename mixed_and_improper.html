@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Mixed Numbers and Improper Fractions</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 30px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #eef4f8;
+      color: #1f2933;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 760px;
+      padding: 30px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      color: #174a6e;
+    }
+
+    .instructions {
+      margin: 0 auto 24px;
+      max-width: 600px;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: #52616b;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      background: #f4f8fb;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .question-card {
+      min-height: 220px;
+      padding: 32px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #f9fcfe;
+      border: 2px solid #d9e7ef;
+      border-radius: 16px;
+    }
+
+    .question-label {
+      margin-bottom: 28px;
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #52616b;
+    }
+
+    .equation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: clamp(2rem, 8vw, 3.4rem);
+      font-weight: bold;
+    }
+
+    .mixed-number {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    .numerator {
+      min-width: 48px;
+      padding: 0 8px 7px;
+      border-bottom: 3px solid #1f2933;
+      text-align: center;
+    }
+
+    .denominator {
+      min-width: 48px;
+      padding: 7px 8px 0;
+      text-align: center;
+    }
+
+    .equals-sign {
+      color: #174a6e;
+    }
+
+    .missing-input {
+      width: 74px;
+      height: 58px;
+      padding: 4px;
+      border: 3px solid #e08b21;
+      border-radius: 9px;
+      background: #fffaf2;
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      outline: none;
+    }
+
+    .missing-input:focus {
+      border-color: #b76500;
+      box-shadow: 0 0 0 4px rgba(224, 139, 33, 0.18);
+    }
+
+    .button-row {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-width: 150px;
+      padding: 13px 22px;
+      border: none;
+      border-radius: 9px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition:
+        transform 0.15s,
+        background 0.15s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    #checkButton {
+      background: #177e58;
+      color: white;
+    }
+
+    #checkButton:hover {
+      background: #116746;
+    }
+
+    #nextButton {
+      display: none;
+      background: #174a6e;
+      color: white;
+    }
+
+    #nextButton:hover {
+      background: #103c5b;
+    }
+
+    #restartButton {
+      background: #e08b21;
+      color: white;
+    }
+
+    #restartButton:hover {
+      background: #ba6f13;
+    }
+
+    .feedback {
+      min-height: 34px;
+      margin-top: 20px;
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    .correct {
+      color: #13734d;
+    }
+
+    .incorrect {
+      color: #c0392b;
+    }
+
+    .summary {
+      display: none;
+      margin-top: 24px;
+      padding: 24px;
+      background: #f4f8fb;
+      border-radius: 14px;
+    }
+
+    .summary h2 {
+      margin-top: 0;
+      color: #174a6e;
+    }
+
+    .final-score {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    @media (max-width: 520px) {
+      .game-container {
+        padding: 22px 14px;
+      }
+
+      .top-bar {
+        flex-direction: column;
+      }
+
+      .equation {
+        gap: 14px;
+      }
+
+      .question-card {
+        padding: 25px 10px;
+      }
+
+      .missing-input {
+        width: 62px;
+        height: 52px;
+        font-size: 1.7rem;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="game-container">
+    <h1>Mixed Number Challenge</h1>
+
+    <p class="instructions">
+      One number is missing. Enter the number that makes the mixed number
+      and improper fraction equivalent.
+    </p>
+
+    <div class="top-bar">
+      <div id="questionCounter">Question 1 of 10</div>
+      <div id="scoreDisplay">Score: 0</div>
+    </div>
+
+    <section id="gameArea">
+      <div class="question-card">
+        <div class="question-label">Enter the missing number.</div>
+        <div class="equation" id="equation"></div>
+      </div>
+
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+
+      <div class="button-row">
+        <button id="checkButton" type="button">Check Answer</button>
+        <button id="nextButton" type="button">Next Question</button>
+      </div>
+    </section>
+
+    <section class="summary" id="summary">
+      <h2>Activity Complete</h2>
+      <p class="final-score" id="finalScore"></p>
+      <p id="summaryMessage"></p>
+
+      <button id="restartButton" type="button">Play Again</button>
+    </section>
+  </main>
+
+  <script>
+    const TOTAL_QUESTIONS = 10;
+
+    const equation = document.getElementById("equation");
+    const feedback = document.getElementById("feedback");
+    const questionCounter = document.getElementById("questionCounter");
+    const scoreDisplay = document.getElementById("scoreDisplay");
+
+    const checkButton = document.getElementById("checkButton");
+    const nextButton = document.getElementById("nextButton");
+    const restartButton = document.getElementById("restartButton");
+
+    const gameArea = document.getElementById("gameArea");
+    const summary = document.getElementById("summary");
+    const finalScore = document.getElementById("finalScore");
+    const summaryMessage = document.getElementById("summaryMessage");
+
+    let currentQuestionNumber = 1;
+    let score = 0;
+    let correctAnswer = 0;
+    let answerChecked = false;
+
+    function randomInteger(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function createFraction(numeratorContent, denominatorContent) {
+      return `
+        <span class="fraction">
+          <span class="numerator">${numeratorContent}</span>
+          <span class="denominator">${denominatorContent}</span>
+        </span>
+      `;
+    }
+
+    function createInput(accessibleLabel) {
+      return `
+        <input
+          type="number"
+          id="answerInput"
+          class="missing-input"
+          min="0"
+          step="1"
+          autocomplete="off"
+          aria-label="${accessibleLabel}"
+        >
+      `;
+    }
+
+    function generateQuestion() {
+      answerChecked = false;
+      feedback.textContent = "";
+      feedback.className = "feedback";
+
+      checkButton.style.display = "inline-block";
+      nextButton.style.display = "none";
+
+      /*
+        Generate a mixed number:
+
+              numerator
+        whole ----------
+             denominator
+
+        The numerator is always less than the denominator.
+      */
+
+      const wholeNumber = randomInteger(1, 6);
+      const denominator = randomInteger(2, 9);
+      const mixedNumerator = randomInteger(1, denominator - 1);
+
+      const improperNumerator =
+        wholeNumber * denominator + mixedNumerator;
+
+      /*
+        The missing position can be:
+
+        0: whole number
+        1: mixed-number numerator
+        2: mixed-number denominator
+        3: improper-fraction numerator
+        4: improper-fraction denominator
+      */
+
+      const missingPosition = randomInteger(0, 4);
+
+      let wholeDisplay = wholeNumber;
+      let mixedNumeratorDisplay = mixedNumerator;
+      let mixedDenominatorDisplay = denominator;
+      let improperNumeratorDisplay = improperNumerator;
+      let improperDenominatorDisplay = denominator;
+
+      switch (missingPosition) {
+        case 0:
+          correctAnswer = wholeNumber;
+          wholeDisplay = createInput("Missing whole number");
+          break;
+
+        case 1:
+          correctAnswer = mixedNumerator;
+          mixedNumeratorDisplay = createInput(
+            "Missing numerator in the mixed number"
+          );
+          break;
+
+        case 2:
+          correctAnswer = denominator;
+          mixedDenominatorDisplay = createInput(
+            "Missing denominator in the mixed number"
+          );
+          break;
+
+        case 3:
+          correctAnswer = improperNumerator;
+          improperNumeratorDisplay = createInput(
+            "Missing numerator in the improper fraction"
+          );
+          break;
+
+        case 4:
+          correctAnswer = denominator;
+          improperDenominatorDisplay = createInput(
+            "Missing denominator in the improper fraction"
+          );
+          break;
+      }
+
+      equation.innerHTML = `
+        <span class="mixed-number">
+          <span>${wholeDisplay}</span>
+
+          ${createFraction(
+            mixedNumeratorDisplay,
+            mixedDenominatorDisplay
+          )}
+        </span>
+
+        <span class="equals-sign">=</span>
+
+        ${createFraction(
+          improperNumeratorDisplay,
+          improperDenominatorDisplay
+        )}
+      `;
+
+      questionCounter.textContent =
+        `Question ${currentQuestionNumber} of ${TOTAL_QUESTIONS}`;
+
+      scoreDisplay.textContent = `Score: ${score}`;
+
+      const answerInput = document.getElementById("answerInput");
+
+      answerInput.focus();
+
+      answerInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          checkAnswer();
+        }
+      });
+    }
+
+    function checkAnswer() {
+      if (answerChecked) {
+        return;
+      }
+
+      const answerInput = document.getElementById("answerInput");
+      const userAnswerText = answerInput.value.trim();
+
+      if (userAnswerText === "") {
+        feedback.textContent = "Please enter a number.";
+        feedback.className = "feedback incorrect";
+        answerInput.focus();
+        return;
+      }
+
+      const userAnswer = Number(userAnswerText);
+
+      if (
+        !Number.isInteger(userAnswer) ||
+        userAnswer < 0
+      ) {
+        feedback.textContent =
+          "Please enter a whole number.";
+        feedback.className = "feedback incorrect";
+        answerInput.focus();
+        return;
+      }
+
+      answerChecked = true;
+      answerInput.disabled = true;
+
+      if (userAnswer === correctAnswer) {
+        score++;
+        feedback.textContent = "Correct! Well done.";
+        feedback.className = "feedback correct";
+      } else {
+        feedback.textContent =
+          `Not quite. The missing number is ${correctAnswer}.`;
+
+        feedback.className = "feedback incorrect";
+      }
+
+      scoreDisplay.textContent = `Score: ${score}`;
+
+      checkButton.style.display = "none";
+      nextButton.style.display = "inline-block";
+      nextButton.focus();
+    }
+
+    function nextQuestion() {
+      if (currentQuestionNumber < TOTAL_QUESTIONS) {
+        currentQuestionNumber++;
+        generateQuestion();
+      } else {
+        finishGame();
+      }
+    }
+
+    function finishGame() {
+      gameArea.style.display = "none";
+      summary.style.display = "block";
+
+      questionCounter.textContent = "Finished";
+      scoreDisplay.textContent =
+        `Score: ${score} out of ${TOTAL_QUESTIONS}`;
+
+      finalScore.textContent =
+        `You answered ${score} out of ${TOTAL_QUESTIONS} questions correctly.`;
+
+      const percentage = score / TOTAL_QUESTIONS;
+
+      if (percentage === 1) {
+        summaryMessage.textContent =
+          "Perfect score! You have an excellent understanding of mixed numbers and improper fractions.";
+      } else if (percentage >= 0.8) {
+        summaryMessage.textContent =
+          "Great work! You have a strong understanding of mixed numbers and improper fractions.";
+      } else if (percentage >= 0.5) {
+        summaryMessage.textContent =
+          "Good effort. A little more practice will help you become even more confident.";
+      } else {
+        summaryMessage.textContent =
+          "Keep practising. Remember: multiply the whole number by the denominator, then add the numerator.";
+      }
+    }
+
+    function restartGame() {
+      currentQuestionNumber = 1;
+      score = 0;
+
+      gameArea.style.display = "block";
+      summary.style.display = "none";
+
+      generateQuestion();
+    }
+
+    checkButton.addEventListener("click", checkAnswer);
+    nextButton.addEventListener("click", nextQuestion);
+    restartButton.addEventListener("click", restartGame);
+
+    generateQuestion();
+  </script>
+</body>
+</html>
