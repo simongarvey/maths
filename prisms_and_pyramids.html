@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>3D Solid Sprint</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #1f2937;
+      background:
+        radial-gradient(circle at top left, #dbeafe 0, transparent 40%),
+        radial-gradient(circle at bottom right, #e0e7ff 0, transparent 42%),
+        #f8fafc;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .game-container {
+      width: min(950px, 100%);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dbe3ee;
+      border-radius: 24px;
+      box-shadow: 0 18px 50px rgba(30, 41, 59, 0.14);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 22px 28px;
+      color: white;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+    }
+
+    .header p {
+      margin: 8px 0 0;
+      line-height: 1.45;
+      opacity: 0.94;
+    }
+
+    .game-screen {
+      padding: 24px;
+    }
+
+    .status-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .status-card {
+      padding: 13px;
+      text-align: center;
+      background: #f1f5f9;
+      border: 1px solid #dbe3ee;
+      border-radius: 14px;
+    }
+
+    .status-label {
+      display: block;
+      margin-bottom: 3px;
+      color: #64748b;
+      font-size: 0.78rem;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-value {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+
+    .timer-card.warning {
+      color: #b91c1c;
+      background: #fee2e2;
+      border-color: #fca5a5;
+    }
+
+    .timer-card.warning .status-value {
+      color: #b91c1c;
+    }
+
+    .progress-track {
+      height: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      background: #e2e8f0;
+      border-radius: 999px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #2563eb);
+      transition: width 0.1s linear;
+    }
+
+    .question-area {
+      display: grid;
+      grid-template-columns: minmax(300px, 1.2fr) minmax(260px, 0.8fr);
+      gap: 24px;
+      align-items: center;
+    }
+
+    .solid-panel {
+      position: relative;
+      min-height: 405px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background:
+        linear-gradient(#ffffffdd, #f8fafcdd),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 29px,
+          #e2e8f0 30px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 29px,
+          #e2e8f0 30px
+        );
+      border: 2px solid #dbe3ee;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      max-width: 510px;
+      height: 390px;
+    }
+
+    .answers-panel h2 {
+      margin: 0 0 18px;
+      color: #1e293b;
+      font-size: 1.45rem;
+      text-align: center;
+    }
+
+    .answer-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .answer-button {
+      width: 100%;
+      min-height: 59px;
+      padding: 12px 16px;
+      color: #1e3a8a;
+      background: white;
+      border: 2px solid #bfdbfe;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 700;
+      line-height: 1.25;
+      transition:
+        transform 0.12s ease,
+        background 0.12s ease,
+        border-color 0.12s ease;
+    }
+
+    .answer-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background: #eff6ff;
+      border-color: #3b82f6;
+    }
+
+    .answer-button:focus-visible,
+    .primary-button:focus-visible {
+      outline: 4px solid rgba(59, 130, 246, 0.3);
+      outline-offset: 2px;
+    }
+
+    .answer-button.correct {
+      color: #166534;
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+
+    .answer-button.incorrect {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+
+    .feedback {
+      min-height: 31px;
+      margin-top: 14px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .feedback.correct {
+      color: #15803d;
+    }
+
+    .feedback.incorrect {
+      color: #b91c1c;
+    }
+
+    .overlay {
+      min-height: 540px;
+      padding: 35px 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .overlay-content {
+      width: min(560px, 100%);
+    }
+
+    .overlay-icon {
+      margin-bottom: 15px;
+      font-size: 4.6rem;
+    }
+
+    .overlay h2 {
+      margin: 0 0 12px;
+      color: #1e3a8a;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .overlay p {
+      max-width: 510px;
+      margin: 0 auto 24px;
+      color: #475569;
+      font-size: 1.08rem;
+      line-height: 1.6;
+    }
+
+    .primary-button {
+      min-width: 190px;
+      padding: 15px 26px;
+      color: white;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      border: none;
+      border-radius: 14px;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 800;
+      transition: transform 0.15s ease;
+    }
+
+    .primary-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 25px 0;
+    }
+
+    .result-card {
+      padding: 18px 10px;
+      background: #f1f5f9;
+      border: 1px solid #dbe3ee;
+      border-radius: 15px;
+    }
+
+    .result-number {
+      display: block;
+      color: #1e3a8a;
+      font-size: 2rem;
+      font-weight: 900;
+    }
+
+    .result-label {
+      color: #64748b;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 730px) {
+      body {
+        padding: 10px;
+        align-items: flex-start;
+      }
+
+      .game-container {
+        border-radius: 18px;
+      }
+
+      .header {
+        padding: 19px 20px;
+      }
+
+      .game-screen {
+        padding: 16px;
+      }
+
+      .question-area {
+        grid-template-columns: 1fr;
+      }
+
+      .solid-panel {
+        min-height: 305px;
+      }
+
+      canvas {
+        height: 300px;
+      }
+
+      .answer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .status-bar {
+        gap: 7px;
+      }
+
+      .status-card {
+        padding: 10px 5px;
+      }
+
+      .status-value {
+        font-size: 1.25rem;
+      }
+
+      .answer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .result-grid {
+        gap: 7px;
+      }
+
+      .result-card {
+        padding: 13px 5px;
+      }
+
+      .result-number {
+        font-size: 1.55rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="game-container">
+    <header class="header">
+      <h1>3D Solid Sprint</h1>
+      <p>Identify as many three-dimensional solids as possible in 30 seconds.</p>
+    </header>
+
+    <!-- Start screen -->
+    <section id="startScreen" class="overlay">
+      <div class="overlay-content">
+        <div class="overlay-icon">🔷</div>
+        <h2>Ready to play?</h2>
+        <p>
+          A three-dimensional solid will appear on the screen. Select its
+          correct name from the four choices. You have 30 seconds to answer
+          as many questions as possible.
+        </p>
+        <button id="startButton" class="primary-button" type="button">
+          Start Game
+        </button>
+      </div>
+    </section>
+
+    <!-- Main game screen -->
+    <section id="gameScreen" class="game-screen hidden">
+      <div class="status-bar">
+        <div id="timerCard" class="status-card timer-card">
+          <span class="status-label">Time</span>
+          <span id="timeDisplay" class="status-value">30.0</span>
+        </div>
+
+        <div class="status-card">
+          <span class="status-label">Correct</span>
+          <span id="scoreDisplay" class="status-value">0</span>
+        </div>
+
+        <div class="status-card">
+          <span class="status-label">Questions</span>
+          <span id="questionDisplay" class="status-value">0</span>
+        </div>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+
+      <div class="question-area">
+        <div class="solid-panel">
+          <canvas
+            id="solidCanvas"
+            width="520"
+            height="390"
+            aria-label="A drawing of a three-dimensional solid"
+          ></canvas>
+        </div>
+
+        <div class="answers-panel">
+          <h2>What is this solid?</h2>
+          <div id="answerGrid" class="answer-grid"></div>
+          <div id="feedback" class="feedback" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results screen -->
+    <section id="resultsScreen" class="overlay hidden">
+      <div class="overlay-content">
+        <div class="overlay-icon">🏆</div>
+        <h2>Time's up!</h2>
+
+        <div class="result-grid">
+          <div class="result-card">
+            <span id="finalScore" class="result-number">0</span>
+            <span class="result-label">Correct</span>
+          </div>
+
+          <div class="result-card">
+            <span id="finalQuestions" class="result-number">0</span>
+            <span class="result-label">Attempted</span>
+          </div>
+
+          <div class="result-card">
+            <span id="finalAccuracy" class="result-number">0%</span>
+            <span class="result-label">Accuracy</span>
+          </div>
+        </div>
+
+        <p id="resultMessage"></p>
+
+        <button id="restartButton" class="primary-button" type="button">
+          Play Again
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const GAME_LENGTH = 30;
+
+    const solids = [
+      { name: "Triangular prism", type: "prism", sides: 3 },
+      { name: "Rectangular prism", type: "prism", sides: 4 },
+      { name: "Pentagonal prism", type: "prism", sides: 5 },
+      { name: "Hexagonal prism", type: "prism", sides: 6 },
+      { name: "Octagonal prism", type: "prism", sides: 8 },
+
+      { name: "Triangular pyramid", type: "pyramid", sides: 3 },
+      { name: "Rectangular pyramid", type: "pyramid", sides: 4 },
+      { name: "Pentagonal pyramid", type: "pyramid", sides: 5 },
+      { name: "Hexagonal pyramid", type: "pyramid", sides: 6 },
+      { name: "Octagonal pyramid", type: "pyramid", sides: 8 }
+    ];
+
+    const canvas = document.getElementById("solidCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const startScreen = document.getElementById("startScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const resultsScreen = document.getElementById("resultsScreen");
+
+    const startButton = document.getElementById("startButton");
+    const restartButton = document.getElementById("restartButton");
+
+    const timeDisplay = document.getElementById("timeDisplay");
+    const scoreDisplay = document.getElementById("scoreDisplay");
+    const questionDisplay = document.getElementById("questionDisplay");
+    const timerCard = document.getElementById("timerCard");
+    const progressBar = document.getElementById("progressBar");
+
+    const answerGrid = document.getElementById("answerGrid");
+    const feedback = document.getElementById("feedback");
+
+    const finalScore = document.getElementById("finalScore");
+    const finalQuestions = document.getElementById("finalQuestions");
+    const finalAccuracy = document.getElementById("finalAccuracy");
+    const resultMessage = document.getElementById("resultMessage");
+
+    let score = 0;
+    let questionsAttempted = 0;
+    let currentSolid = null;
+    let previousSolidName = "";
+    let gameActive = false;
+    let acceptingAnswer = false;
+    let startTime = 0;
+    let animationFrameId = null;
+    let nextQuestionTimeout = null;
+
+    startButton.addEventListener("click", startGame);
+    restartButton.addEventListener("click", startGame);
+
+    function startGame() {
+      clearTimeout(nextQuestionTimeout);
+      cancelAnimationFrame(animationFrameId);
+
+      score = 0;
+      questionsAttempted = 0;
+      gameActive = true;
+      acceptingAnswer = true;
+      startTime = performance.now();
+
+      scoreDisplay.textContent = "0";
+      questionDisplay.textContent = "0";
+      timeDisplay.textContent = GAME_LENGTH.toFixed(1);
+      progressBar.style.width = "100%";
+      timerCard.classList.remove("warning");
+
+      startScreen.classList.add("hidden");
+      resultsScreen.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
+
+      showNextQuestion();
+      updateTimer();
+    }
+
+    function updateTimer() {
+      if (!gameActive) {
+        return;
+      }
+
+      const elapsed = (performance.now() - startTime) / 1000;
+      const remaining = Math.max(0, GAME_LENGTH - elapsed);
+
+      timeDisplay.textContent = remaining.toFixed(1);
+      progressBar.style.width = `${(remaining / GAME_LENGTH) * 100}%`;
+
+      if (remaining <= 5) {
+        timerCard.classList.add("warning");
+      }
+
+      if (remaining <= 0) {
+        endGame();
+        return;
+      }
+
+      animationFrameId = requestAnimationFrame(updateTimer);
+    }
+
+    function showNextQuestion() {
+      if (!gameActive) {
+        return;
+      }
+
+      acceptingAnswer = true;
+      feedback.textContent = "";
+      feedback.className = "feedback";
+
+      currentSolid = getRandomSolid();
+
+      const choices = createChoices(currentSolid);
+      displayChoices(choices);
+      drawSolid(currentSolid);
+    }
+
+    function getRandomSolid() {
+      let selected;
+
+      do {
+        selected = solids[Math.floor(Math.random() * solids.length)];
+      } while (
+        solids.length > 1 &&
+        selected.name === previousSolidName
+      );
+
+      previousSolidName = selected.name;
+      return selected;
+    }
+
+    function createChoices(correctSolid) {
+      const incorrect = shuffle(
+        solids.filter(solid => solid.name !== correctSolid.name)
+      ).slice(0, 3);
+
+      return shuffle([correctSolid, ...incorrect]);
+    }
+
+    function displayChoices(choices) {
+      answerGrid.innerHTML = "";
+
+      choices.forEach(choice => {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "answer-button";
+        button.textContent = choice.name;
+
+        button.addEventListener("click", () => {
+          checkAnswer(choice.name, button);
+        });
+
+        answerGrid.appendChild(button);
+      });
+    }
+
+    function checkAnswer(selectedName, selectedButton) {
+      if (!gameActive || !acceptingAnswer) {
+        return;
+      }
+
+      acceptingAnswer = false;
+      questionsAttempted++;
+
+      const buttons = [...answerGrid.querySelectorAll(".answer-button")];
+      buttons.forEach(button => {
+        button.disabled = true;
+      });
+
+      if (selectedName === currentSolid.name) {
+        score++;
+        selectedButton.classList.add("correct");
+        feedback.textContent = "Correct!";
+        feedback.className = "feedback correct";
+      } else {
+        selectedButton.classList.add("incorrect");
+        feedback.textContent = `It was a ${currentSolid.name.toLowerCase()}.`;
+        feedback.className = "feedback incorrect";
+
+        const correctButton = buttons.find(
+          button => button.textContent === currentSolid.name
+        );
+
+        if (correctButton) {
+          correctButton.classList.add("correct");
+        }
+      }
+
+      scoreDisplay.textContent = score;
+      questionDisplay.textContent = questionsAttempted;
+
+      nextQuestionTimeout = setTimeout(() => {
+        if (gameActive) {
+          showNextQuestion();
+        }
+      }, 550);
+    }
+
+    function endGame() {
+      gameActive = false;
+      acceptingAnswer = false;
+
+      clearTimeout(nextQuestionTimeout);
+      cancelAnimationFrame(animationFrameId);
+
+      const accuracy = questionsAttempted === 0
+        ? 0
+        : Math.round((score / questionsAttempted) * 100);
+
+      finalScore.textContent = score;
+      finalQuestions.textContent = questionsAttempted;
+      finalAccuracy.textContent = `${accuracy}%`;
+      resultMessage.textContent = getResultMessage(score, accuracy);
+
+      gameScreen.classList.add("hidden");
+      resultsScreen.classList.remove("hidden");
+    }
+
+    function getResultMessage(correct, accuracy) {
+      if (correct >= 15 && accuracy >= 85) {
+        return "Outstanding! You identified the solids quickly and accurately.";
+      }
+
+      if (correct >= 10 && accuracy >= 70) {
+        return "Great work! You have a strong understanding of three-dimensional solids.";
+      }
+
+      if (correct >= 6) {
+        return "Good effort! Keep practising the differences between prisms and pyramids.";
+      }
+
+      return "Keep practising! Look carefully at the base shapes and whether the solid has one apex or two matching ends.";
+    }
+
+    function shuffle(array) {
+      const copy = [...array];
+
+      for (let i = copy.length - 1; i > 0; i--) {
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
+      }
+
+      return copy;
+    }
+
+    /*
+      3D drawing functions
+    */
+
+    function drawSolid(solid) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const rotation = {
+        x: randomBetween(-0.48, -0.22),
+        y: randomBetween(-0.65, 0.65),
+        z: randomBetween(-0.15, 0.15)
+      };
+
+      const model = solid.type === "prism"
+        ? createPrism(solid.sides)
+        : createPyramid(solid.sides);
+
+      const transformedVertices = model.vertices.map(vertex => {
+        return rotatePoint(vertex, rotation);
+      });
+
+      const projectedVertices = transformedVertices.map(vertex => {
+        return projectPoint(vertex);
+      });
+
+      drawFaces(
+        model.faces,
+        transformedVertices,
+        projectedVertices
+      );
+
+      drawEdges(
+        model.edges,
+        transformedVertices,
+        projectedVertices
+      );
+    }
+
+    function createPrism(numberOfSides) {
+      const vertices = [];
+      const faces = [];
+      const edges = [];
+
+      const radius = numberOfSides === 4 ? 1.08 : 1.15;
+      const halfDepth = 0.75;
+
+      const angleOffset =
+        numberOfSides === 4
+          ? Math.PI / 4
+          : -Math.PI / 2;
+
+      for (let layer = 0; layer < 2; layer++) {
+        const z = layer === 0 ? -halfDepth : halfDepth;
+
+        for (let i = 0; i < numberOfSides; i++) {
+          const angle =
+            angleOffset +
+            (i * Math.PI * 2) / numberOfSides;
+
+          let x = radius * Math.cos(angle);
+          let y = radius * Math.sin(angle);
+
+          if (numberOfSides === 4) {
+            x *= 1.25;
+            y *= 0.86;
+          }
+
+          vertices.push({ x, y, z });
+        }
+      }
+
+      const frontFace = [];
+      const backFace = [];
+
+      for (let i = 0; i < numberOfSides; i++) {
+        frontFace.push(i);
+        backFace.push(numberOfSides + i);
+
+        const next = (i + 1) % numberOfSides;
+
+        edges.push([i, next]);
+        edges.push([numberOfSides + i, numberOfSides + next]);
+        edges.push([i, numberOfSides + i]);
+
+        faces.push([
+          i,
+          next,
+          numberOfSides + next,
+          numberOfSides + i
+        ]);
+      }
+
+      faces.push(frontFace);
+      faces.push(backFace.reverse());
+
+      return { vertices, faces, edges };
+    }
+
+    function createPyramid(numberOfSides) {
+      const vertices = [];
+      const faces = [];
+      const edges = [];
+
+      const radius = numberOfSides === 4 ? 1.15 : 1.2;
+      const baseZ = -0.62;
+      const angleOffset =
+        numberOfSides === 4
+          ? Math.PI / 4
+          : -Math.PI / 2;
+
+      for (let i = 0; i < numberOfSides; i++) {
+        const angle =
+          angleOffset +
+          (i * Math.PI * 2) / numberOfSides;
+
+        let x = radius * Math.cos(angle);
+        let y = radius * Math.sin(angle);
+
+        if (numberOfSides === 4) {
+          x *= 1.18;
+          y *= 0.88;
+        }
+
+        vertices.push({ x, y, z: baseZ });
+      }
+
+      const apexIndex = vertices.length;
+
+      vertices.push({
+        x: 0,
+        y: 0,
+        z: 1.25
+      });
+
+      const baseFace = [];
+
+      for (let i = 0; i < numberOfSides; i++) {
+        const next = (i + 1) % numberOfSides;
+
+        baseFace.push(i);
+        edges.push([i, next]);
+        edges.push([i, apexIndex]);
+        faces.push([i, next, apexIndex]);
+      }
+
+      faces.push(baseFace.reverse());
+
+      return { vertices, faces, edges };
+    }
+
+    function rotatePoint(point, rotation) {
+      let { x, y, z } = point;
+
+      // Rotate around the X axis
+      let newY =
+        y * Math.cos(rotation.x) -
+        z * Math.sin(rotation.x);
+
+      let newZ =
+        y * Math.sin(rotation.x) +
+        z * Math.cos(rotation.x);
+
+      y = newY;
+      z = newZ;
+
+      // Rotate around the Y axis
+      let newX =
+        x * Math.cos(rotation.y) +
+        z * Math.sin(rotation.y);
+
+      newZ =
+        -x * Math.sin(rotation.y) +
+        z * Math.cos(rotation.y);
+
+      x = newX;
+      z = newZ;
+
+      // Rotate around the Z axis
+      newX =
+        x * Math.cos(rotation.z) -
+        y * Math.sin(rotation.z);
+
+      newY =
+        x * Math.sin(rotation.z) +
+        y * Math.cos(rotation.z);
+
+      return {
+        x: newX,
+        y: newY,
+        z
+      };
+    }
+
+    function projectPoint(point) {
+      const cameraDistance = 5;
+      const scale = 122;
+      const perspective =
+        cameraDistance / (cameraDistance - point.z);
+
+      return {
+        x: canvas.width / 2 + point.x * scale * perspective,
+        y: canvas.height / 2 + point.y * scale * perspective,
+        depth: point.z
+      };
+    }
+
+    function drawFaces(faces, transformed, projected) {
+      const sortedFaces = faces
+        .map(face => {
+          const averageDepth =
+            face.reduce(
+              (sum, index) => sum + transformed[index].z,
+              0
+            ) / face.length;
+
+          return { face, averageDepth };
+        })
+        .sort((a, b) => a.averageDepth - b.averageDepth);
+
+      sortedFaces.forEach(({ face, averageDepth }) => {
+        const brightness = Math.max(
+          0,
+          Math.min(1, (averageDepth + 1.6) / 3.2)
+        );
+
+        const lightness = 86 - brightness * 15;
+
+        ctx.beginPath();
+
+        face.forEach((vertexIndex, index) => {
+          const point = projected[vertexIndex];
+
+          if (index === 0) {
+            ctx.moveTo(point.x, point.y);
+          } else {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
+
+        ctx.closePath();
+        ctx.fillStyle = `hsla(217, 82%, ${lightness}%, 0.77)`;
+        ctx.fill();
+      });
+    }
+
+    function drawEdges(edges, transformed, projected) {
+      edges
+        .map(edge => {
+          const averageDepth =
+            (transformed[edge[0]].z + transformed[edge[1]].z) / 2;
+
+          return { edge, averageDepth };
+        })
+        .sort((a, b) => a.averageDepth - b.averageDepth)
+        .forEach(({ edge, averageDepth }) => {
+          const first = projected[edge[0]];
+          const second = projected[edge[1]];
+
+          const isBehind = averageDepth < -0.55;
+
+          ctx.beginPath();
+          ctx.moveTo(first.x, first.y);
+          ctx.lineTo(second.x, second.y);
+
+          ctx.strokeStyle = isBehind
+            ? "rgba(30, 64, 175, 0.42)"
+            : "rgba(30, 64, 175, 0.98)";
+
+          ctx.lineWidth = isBehind ? 2 : 3;
+          ctx.setLineDash(isBehind ? [7, 6] : []);
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.stroke();
+        });
+
+      ctx.setLineDash([]);
+    }
+
+    function randomBetween(minimum, maximum) {
+      return minimum + Math.random() * (maximum - minimum);
+    }
+  </script>
+</body>
+</html>
